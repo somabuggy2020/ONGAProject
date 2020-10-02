@@ -11,7 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Widgets LinguistTools REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets LinguistTools REQUIRED)
 
 #librealsense
 include_directories(C:\\librealsense1.12.4\\include)
@@ -29,26 +29,34 @@ include_directories(${PCL_INCLUDE_DIRS})
 set(TS_FILES ONGAProject_ja_JP.ts)
 
 if(ANDROID)
-  add_library(ONGAProject SHARED
-    main.cpp
-    src/mainwindow.cpp
-    src/mainwindow.h
-    src/mainwindow.ui
-    ${TS_FILES}
-  )
+	add_library(ONGAProject SHARED
+		main.cpp
+		src/mainwindow.cpp
+		src/mainwindow.h
+		src/mainwindow.ui
+		${TS_FILES}
+		)
 else()
 	add_executable(ONGA_Depth
-    main.cpp
-    src/mainwindow.cpp
-    src/mainwindow.h
-    src/mainwindow.ui
+		src/main.cpp
+		src/mainwindow.cpp
+		src/mainwindow.h
+		src/mainwindow.ui
+		src/common.h
 		src/R200/r200.cpp
 		src/R200/r200.h
-    ${TS_FILES}
-  )
+		src/ui/Control/control.cpp
+		src/ui/Control/control.h
+		src/ui/Control/control.ui
+		src/ui/CameraParams/cameraparameter.cpp
+		src/ui/CameraParams/cameraparameter.h
+		src/ui/CameraParams/cameraparameter.ui
+		${TS_FILES}
+		)
 endif()
 
-target_link_libraries(ONGA_Depth PRIVATE Qt5::Widgets
+target_link_libraries(ONGA_Depth PRIVATE
+	Qt5::Widgets
 	${OpenCV_LIBRARIES}
 	realsense)
 
