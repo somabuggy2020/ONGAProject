@@ -10,7 +10,16 @@ Control::Control(QWidget *parent) :
 	ui->setupUi(this);
 	//	setWindowTitle("Save_Image");
 
-	width_divied = ui->dividednum->value();
+	//configファイル読み込み
+	QSettings cfg("config.ini", QSettings::IniFormat);
+	cfg.beginGroup("MAIN");
+	ui->dividednum->setValue(cfg.value("DivN").toInt());
+	cfg.endGroup();
+
+
+
+
+	//	width_divied = ui->dividednum->value();
 
 	ui->datacount->setValue(0);
 	ui->gridms->setChecked(false);
@@ -42,8 +51,9 @@ void Control::on_rgbsave_clicked()
 
 void Control::on_dividednum_valueChanged(int arg1)
 {
-	width_divied = arg1;
-	emit setdivnum(width_divied);
+	//	width_divied = arg1;
+	//	emit setdivnum(width_divied);
+	emit setdivnum(arg1);
 }
 
 void Control::countup()
@@ -161,8 +171,8 @@ void Control::on_finish_clicked()
 	ofstream ofs(savePath.toStdString());
 	cout << "savePath:" << savePath.toStdString() << endl;
 
-	ofs << "width_divied," << width_divied << endl;
-	ofs << "height," << width_divied << endl;
+	//	ofs << "width_divied," << width_divied << endl;
+	//	ofs << "height," << width_divied << endl;
 	ofs << "grid_No" << "," << "average" << endl;
 
 	/*

@@ -2,7 +2,6 @@
 #include "src/ui_mainwindow.h"
 
 #define THREAD_T 33
-#define NUM_MEASURE 30
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -16,10 +15,12 @@ MainWindow::MainWindow(QWidget *parent)
 	dir.mkdir("Log/DepthData");
 	path = QString("./Log/DepthData/");
 
-
-
-
-
+	//configファイル読み込み
+	QSettings cfg("config.ini", QSettings::IniFormat);
+	cfg.beginGroup("MAIN");
+	count_n = cfg.value("CountN").toInt();
+	div_n = cfg.value("DivN").toInt();
+	cfg.endGroup();
 
 	/***
 	 * GUIウィジェットの追加
@@ -48,14 +49,29 @@ MainWindow::MainWindow(QWidget *parent)
 	 * signals-slots
 	 ***/
 	connect(control, &Control::setdivnum, this,
-					[=](int divnum){
-		this->divnum = divnum;
-	}, Qt::QueuedConnection);
+					[=](int n){
+		div_n = n;
+	});
 
 	connect(procProg, &ProcessingProgress::start, this,
 					[=](){
+		bar = new QProgressBar(this);
+		ui->statusbar->addWidget(bar);
+		bar->setMinimum(0);
+		bar->setMaximum(count_n);
 		mode = Mode::Measure;
-	}, Qt::QueuedConnection);
+	});
+
+	connect(this, &MainWindow::progressMeasurement, this,
+					[=](int count){
+		bar->setValue(count);
+	});
+
+	connect(this, &MainWindow::finishedMeasurement, this,
+					[=](){
+		ui->statusbar->removeWidget(bar);
+		bar->deleteLater();
+	});
 
 
 	/***
@@ -68,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
 	}
 
 	mode = Mode::Wait;
+	isThread = true;
 
 	start();
 }
@@ -101,7 +118,7 @@ void MainWindow::main()
 
 	//処理
 	//モード変数modeにしたがって処理内容を切替
-	qInfo() << "Mode:" << Mode::str[mode];
+	qDebug() << "Mode:" << Mode::str[mode];
 
 	switch (mode) {
 		case Mode::Wait:
@@ -121,12 +138,19 @@ void MainWindow::main()
 
 	//描画処理
 	draw(frames);
+	cv::imshow("test", *frames.imgAlignedRGB);
+	cv::waitKey(1);
 
 	//画像用メモリ空間はは必ずリリース
 	frames.imgRGB->release();
 	frames.imgDepth->release();
 	frames.imgAlignedRGB->release();
 	frames.imgAlignedDepth->release();
+
+	//ループ終了,タイマを再スタートしない感じで
+	if(!isThread){
+		return;
+	}
 
 	QMetaObject::invokeMethod(timer, "start");
 	return;
@@ -144,13 +168,13 @@ void MainWindow::measure(Frames_t &frames)
 	//(1)Depth画像格子分割しながら，各格子における平均depth値を格納
 	//格納先はローカルメンバ変数
 	grid_depth_averages_t.clear();
-	for(int j = 0; j < divnum; j++){
-		for(int i = 0; i < divnum; i++){
+	for(int j = 0; j < div_n; j++){
+		for(int i = 0; i < div_n; i++){
 			//切り出し範囲計算
-			cv::Rect rect = cv::Rect(imgDepth.cols/divnum*i,
-															 imgDepth.rows/divnum*j,
-															 imgDepth.cols/divnum,
-															 imgDepth.rows/divnum);
+			cv::Rect rect = cv::Rect(imgDepth.cols/div_n*i,
+															 imgDepth.rows/div_n*j,
+															 imgDepth.cols/div_n,
+															 imgDepth.rows/div_n);
 
 			//切り出し処理
 			cv::Mat _out(imgDepth, rect);
@@ -168,10 +192,12 @@ void MainWindow::measure(Frames_t &frames)
 	grid_depth_averages_T << grid_depth_averages_t;
 
 	//計測回数がNUM_MEASUREに達したら計測終了
-	if(grid_depth_averages_T.length() >= (int)NUM_MEASURE){
+	if(grid_depth_averages_T.length() >= count_n){
 		mode = Mode::Save; //モード遷移
+		emit finishedMeasurement();
 	}
 
+	emit progressMeasurement(grid_depth_averages_T.count());
 	return;
 }
 
@@ -215,7 +241,7 @@ void MainWindow::calc()
 	Histgrams.clear();
 
 	//頑張ってcv::Mat型にdepth平均値の時系列データを挿入する
-	for(int i = 0; i < divnum*divnum; i++){ //i番目のgrid
+	for(int i = 0; i < div_n*div_n; i++){ //i番目のgrid
 
 		float *averages = new float[grid_depth_averages_T.length()];
 		for(int t = 0; t < grid_depth_averages_T.length(); t++){ //時刻tのi番目のグリッド
@@ -251,20 +277,40 @@ void MainWindow::calc()
 void MainWindow::draw(Frames_t &frames)
 {
 	//格子の描画
-	for(int i = 0; i <= divnum; i++){
+	for(int i = 0; i <= div_n; i++){
 		//緯線
 		cv::line(*frames.imgAlignedRGB,
-						 cv::Point(frames.imgAlignedRGB->cols/divnum*i, 0), //上座標
-						 cv::Point(frames.imgAlignedRGB->cols/divnum*i, frames.imgAlignedRGB->rows),
+						 cv::Point(frames.imgAlignedRGB->cols/div_n*i, 0), //上座標
+						 cv::Point(frames.imgAlignedRGB->cols/div_n*i, frames.imgAlignedRGB->rows),
 						 cv::Scalar(0,0,255), //Red
 						 2);
 		//罫線
 		cv::line(*frames.imgAlignedRGB,
-						 cv::Point(0, frames.imgAlignedRGB->rows/divnum*i),
-						 cv::Point(frames.imgAlignedRGB->cols, frames.imgAlignedRGB->rows/divnum*i),
+						 cv::Point(0, frames.imgAlignedRGB->rows/div_n*i),
+						 cv::Point(frames.imgAlignedRGB->cols, frames.imgAlignedRGB->rows/div_n*i),
 						 cv::Scalar(0,0,255),
 						 2);
 	}
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+	isThread = false;
+	QThread::msleep(1000);
+	th->exit();
+	th->deleteLater();
+
+	//設定値書き込み
+	QSettings cfg("config.ini", QSettings::IniFormat);
+	cfg.beginGroup("MAIN");
+	cfg.setValue("CountN", QVariant::fromValue(count_n));
+	cfg.setValue("DivN", QVariant::fromValue(div_n));
+	cfg.endGroup();
+	cfg.sync();
+
+
+
+	qInfo() << "System closed";
 }
 
 /*!

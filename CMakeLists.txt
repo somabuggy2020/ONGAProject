@@ -28,6 +28,10 @@ include_directories(${PCL_INCLUDE_DIRS})
 
 set(TS_FILES ONGAProject_ja_JP.ts)
 
+#for resource files
+file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
+file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(ONGA_Depth
 	src/main.cpp
 	src/mainwindow.cpp
