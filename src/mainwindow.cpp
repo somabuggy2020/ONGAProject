@@ -16,6 +16,11 @@ MainWindow::MainWindow(QWidget *parent)
 	dir.mkdir("Log/DepthData");
 	path = QString("./Log/DepthData/");
 
+
+
+
+
+
 	/***
 	 * GUIウィジェットの追加
 	 ***/

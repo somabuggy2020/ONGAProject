@@ -11,6 +11,7 @@
 #include <QList>
 #include <QDir>
 #include <QFile>
+#include <QSettings>
 
 #include "ui/Control/control.h"
 #include "ui/CameraParams/cameraparameter.h"
@@ -56,6 +57,7 @@ private:
 	int mode;
 
 	int divnum;
+
 	QList<double> grid_depth_averages_t; //時刻tにおける各格子の平均depth値
 	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
 	QList<cv::Mat> Histgrams;

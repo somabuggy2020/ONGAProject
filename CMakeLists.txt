@@ -28,35 +28,25 @@ include_directories(${PCL_INCLUDE_DIRS})
 
 set(TS_FILES ONGAProject_ja_JP.ts)
 
-if(ANDROID)
-	add_library(ONGAProject SHARED
-		main.cpp
-		src/mainwindow.cpp
-		src/mainwindow.h
-		src/mainwindow.ui
-		${TS_FILES}
-		)
-else()
-	add_executable(ONGA_Depth
-		src/main.cpp
-		src/mainwindow.cpp
-		src/mainwindow.h
-		src/mainwindow.ui
-		src/common.h
-		src/R200/r200.cpp
-		src/R200/r200.h
-		src/ui/Control/control.cpp
-		src/ui/Control/control.h
-		src/ui/Control/control.ui
-		src/ui/CameraParams/cameraparameter.cpp
-		src/ui/CameraParams/cameraparameter.h
-		src/ui/CameraParams/cameraparameter.ui
-		src/ui/ProcessingProgress/processingprogress.cpp
-		src/ui/ProcessingProgress/processingprogress.h
-		src/ui/ProcessingProgress/processingprogress.ui
-		${TS_FILES}
-		)
-endif()
+add_executable(ONGA_Depth
+	src/main.cpp
+	src/mainwindow.cpp
+	src/mainwindow.h
+	src/mainwindow.ui
+	src/common.h
+	src/R200/r200.cpp
+	src/R200/r200.h
+	src/ui/Control/control.cpp
+	src/ui/Control/control.h
+	src/ui/Control/control.ui
+	src/ui/CameraParams/cameraparameter.cpp
+	src/ui/CameraParams/cameraparameter.h
+	src/ui/CameraParams/cameraparameter.ui
+	src/ui/ProcessingProgress/processingprogress.cpp
+	src/ui/ProcessingProgress/processingprogress.h
+	src/ui/ProcessingProgress/processingprogress.ui
+	${TS_FILES}
+)
 
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
