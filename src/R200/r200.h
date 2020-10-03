@@ -10,6 +10,8 @@
 #include <opencv2/opencv.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "../common.h"
+
 namespace RGBD
 {
 	struct Data_t
@@ -31,7 +33,8 @@ public:
 	explicit R200(QObject *parent = nullptr);
 
 	int init();
-	int getFrames(RGBD::Data_t &data);
+	int getFrames(Frames_t &frames);
+	int setParams(CamParams_t &camparams);
 
 private:
 	int initDevice(QString qsSerial="none");

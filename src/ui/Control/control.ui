@@ -130,7 +130,11 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="dividednum"/>
+      <widget class="QSpinBox" name="dividednum">
+       <property name="value">
+        <number>7</number>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

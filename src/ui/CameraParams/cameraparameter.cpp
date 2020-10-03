@@ -14,19 +14,19 @@ Cameraparameter::~Cameraparameter()
 	delete ui;
 }
 
-void Cameraparameter::init(CamParam_t camparam)
+void Cameraparameter::init(CamParams_t camparam)
 {
 	ui->sldrSaturation->setValue((int)camparam.saturation);
 	ui->sldrWhitebalance->setValue((int)camparam.whitebalance);
-	ui->sldrGain->setValue((int)camparam.colorgain);
-	ui->sldrExposure->setValue((int)camparam.colorexposure);
+	ui->sldrGain->setValue((int)camparam.gain);
+	ui->sldrExposure->setValue((int)camparam.exposure);
 	ui->sldrIrExposure->setValue((int)camparam.lrexposure);
 	ui->sldrGain->setValue((int)camparam.lrgain);
 
 	ui->lblSaturation->setNum(camparam.saturation);
 	ui->lblWhiteBalance->setNum(camparam.whitebalance);
-	ui->lblGain->setNum(camparam.colorgain);
-	ui->lblExposure->setNum(camparam.colorexposure);
+	ui->lblGain->setNum(camparam.gain);
+	ui->lblExposure->setNum(camparam.exposure);
 	ui->lblIrExposure->setNum(camparam.lrexposure);
 	ui->lblIrGain->setNum(camparam.lrgain);
 
@@ -35,9 +35,17 @@ void Cameraparameter::init(CamParam_t camparam)
 	this->camparam.lrgain = camparam.lrgain;
 	this->camparam.saturation = camparam.saturation;
 	this->camparam.whitebalance = camparam.whitebalance;
-	this->camparam.colorgain = camparam.colorgain;
-	this->camparam.colorexposure = camparam.colorexposure;
+	this->camparam.gain = camparam.gain;
+	this->camparam.exposure = camparam.exposure;
 
+}
+
+void Cameraparameter::get(CamParams_t &camparam)
+{
+	qDebug() << "";
+	//copy
+	camparam = this->camparam;
+	return;
 }
 
 
@@ -69,13 +77,13 @@ void Cameraparameter::on_sldrExposure_valueChanged(int value)
 
 void Cameraparameter::on_sldrIrExposure_valueChanged(int value)
 {
-	camparam.colorgain = (double)value;
+	camparam.gain = (double)value;
 	emit changedcamerapara(camparam);
 }
 
 void Cameraparameter::on_sldrIrGain_valueChanged(int value)
 {
-	camparam.colorexposure = (double)value;
+	camparam.exposure = (double)value;
 	emit changedcamerapara(camparam);
 }
 

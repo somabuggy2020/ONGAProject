@@ -21,10 +21,11 @@ public:
 	explicit Cameraparameter(QWidget *parent = 0);
 	~Cameraparameter();
 
-	void init(CamParam_t);
+	void init(CamParams_t);
+	void get(CamParams_t &camparam);
 
 signals:
-	void changedcamerapara(CamParam_t);
+	void changedcamerapara(CamParams_t);
 
 private slots:
 	void on_sldrSaturation_valueChanged(int value);
@@ -38,7 +39,7 @@ private:
 	Ui::Cameraparameter *ui;
 
 public:
-	CamParam_t camparam;
+	CamParams_t camparam;
 };
 
 #endif // CAMERAPARAMETER_H

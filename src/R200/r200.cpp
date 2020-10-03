@@ -37,16 +37,23 @@ int R200::init()
 	}
 }
 
-int R200::getFrames(RGBD::Data_t &data)
+int R200::getFrames(Frames_t &frames)
 {
+	if(rsdev == nullptr){
+		frames.imgRGB = new cv::Mat(480, 640, CV_8UC3, cv::Scalar::all(255));
+		frames.imgDepth = new cv::Mat();
+		frames.imgAlignedRGB = new cv::Mat(480, 640, CV_8UC3, cv::Scalar::all(255));
+		frames.imgAlignedDepth = new cv::Mat(480, 640, CV_16UC1, cv::Scalar::all(0));
+	}
+
 	try{
 		if(rsdev->is_streaming())	rsdev->wait_for_frames();
 		else	return -1; //failure get new frames
 
-		data.imgRGB = new cv::Mat(szRGB, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::color));
-		data.imgDepth = new cv::Mat(szDepth, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth));
-		data.imgAlignedRGB = new cv::Mat(szRGB2Depth, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::color_aligned_to_depth));
-		data.imgAlignedDepth = new cv::Mat(szDepth2RGB, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth_aligned_to_color));
+		frames.imgRGB = new cv::Mat(szRGB, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::color));
+		frames.imgDepth = new cv::Mat(szDepth, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth));
+		frames.imgAlignedRGB = new cv::Mat(szRGB2Depth, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::color_aligned_to_depth));
+		frames.imgAlignedDepth = new cv::Mat(szDepth2RGB, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth_aligned_to_color));
 	}
 	catch(const rs::error &e){
 		qWarning() << e.get_failed_args().c_str();
@@ -55,7 +62,12 @@ int R200::getFrames(RGBD::Data_t &data)
 		return -1;
 	}
 
+	return 0;
+}
 
+int R200::setParams(CamParams_t &camparams)
+{
+	qDebug() << "";
 	return 0;
 }
 

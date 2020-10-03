@@ -51,6 +51,9 @@ else()
 		src/ui/CameraParams/cameraparameter.cpp
 		src/ui/CameraParams/cameraparameter.h
 		src/ui/CameraParams/cameraparameter.ui
+		src/ui/ProcessingProgress/processingprogress.cpp
+		src/ui/ProcessingProgress/processingprogress.h
+		src/ui/ProcessingProgress/processingprogress.ui
 		${TS_FILES}
 		)
 endif()

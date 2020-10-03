@@ -152,4 +152,32 @@
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>ProcessingProgress</name>
+    <message>
+        <location filename="src/ui/ProcessingProgress/processingprogress.ui" line="25"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ProcessingProgress/processingprogress.ui" line="45"/>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ProcessingProgress/processingprogress.ui" line="58"/>
+        <source>DataClear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ProcessingProgress/processingprogress.ui" line="71"/>
+        <source>Stop and DataSave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ProcessingProgress/processingprogress.ui" line="84"/>
+        <source>Calculate Angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

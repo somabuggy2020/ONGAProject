@@ -10,8 +10,8 @@ Control::Control(QWidget *parent) :
 	ui->setupUi(this);
 	//	setWindowTitle("Save_Image");
 
-	ui->dividednum->setValue(7);
 	width_divied = ui->dividednum->value();
+
 	ui->datacount->setValue(0);
 	ui->gridms->setChecked(false);
 	ui->allms->setChecked(true);
@@ -43,7 +43,7 @@ void Control::on_rgbsave_clicked()
 void Control::on_dividednum_valueChanged(int arg1)
 {
 	width_divied = arg1;
-	emit setdivnum(arg1);
+	emit setdivnum(width_divied);
 }
 
 void Control::countup()
