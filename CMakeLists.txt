@@ -49,6 +49,9 @@ add_executable(ONGA_Depth
 	src/ui/ProcessingProgress/processingprogress.cpp
 	src/ui/ProcessingProgress/processingprogress.h
 	src/ui/ProcessingProgress/processingprogress.ui
+	src/ui/ImageViewer/imageviewer.cpp
+	src/ui/ImageViewer/imageviewer.h
+	src/ui/ImageViewer/imageviewer.ui
 	${TS_FILES}
 )
 

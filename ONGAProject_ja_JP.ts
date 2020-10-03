@@ -145,10 +145,23 @@
     </message>
 </context>
 <context>
+    <name>ImageViewer</name>
+    <message>
+        <location filename="src/ui/ImageViewer/imageviewer.ui" line="32"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="src/mainwindow.ui" line="14"/>
+        <location filename="src/mainwindow.ui" line="25"/>
         <source>MainWindow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/mainwindow.ui" line="38"/>
+        <source>AlignedRGB</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

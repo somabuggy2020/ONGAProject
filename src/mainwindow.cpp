@@ -20,7 +20,16 @@ MainWindow::MainWindow(QWidget *parent)
 	cfg.beginGroup("MAIN");
 	count_n = cfg.value("CountN").toInt();
 	div_n = cfg.value("DivN").toInt();
+	h_max = cfg.value("HistMax").toFloat();
+	h_b = cfg.value("HistBin").toFloat();
 	cfg.endGroup();
+
+
+	qRegisterMetaType<cv::Mat>();
+	qRegisterMetaType<Frames_t>();
+
+
+	mtx = new QMutex();
 
 	/***
 	 * GUIウィジェットの追加
@@ -37,6 +46,12 @@ MainWindow::MainWindow(QWidget *parent)
 	QDockWidget *dwControl = new QDockWidget();
 	dwControl->setWidget(control);
 	this->addDockWidget(Qt::RightDockWidgetArea, dwControl);
+
+	imgvwr = new ImageViewer("RGB", this);
+	imgvwr->initialize(CV_8UC3, QImage::Format::Format_BGR888);
+	QDockWidget *dwImgVwr = new QDockWidget();
+	dwImgVwr->setWidget(imgvwr);
+	this->addDockWidget(Qt::LeftDockWidgetArea, dwImgVwr);
 
 	//ProcessingProgress UI
 	procProg = new ProcessingProgress("", this);
@@ -61,6 +76,11 @@ MainWindow::MainWindow(QWidget *parent)
 		bar->setMaximum(count_n);
 		mode = Mode::Measure;
 	});
+
+	connect(this, &MainWindow::updateFrames, this,
+					[=](Frames_t *frames){
+		imgvwr->setImage(frames->imgAlignedRGB);
+	},Qt::BlockingQueuedConnection);
 
 	connect(this, &MainWindow::progressMeasurement, this,
 					[=](int count){
@@ -138,8 +158,7 @@ void MainWindow::main()
 
 	//描画処理
 	draw(frames);
-	cv::imshow("test", *frames.imgAlignedRGB);
-	cv::waitKey(1);
+	emit updateFrames(&frames);
 
 	//画像用メモリ空間はは必ずリリース
 	frames.imgRGB->release();
@@ -168,6 +187,7 @@ void MainWindow::measure(Frames_t &frames)
 	//(1)Depth画像格子分割しながら，各格子における平均depth値を格納
 	//格納先はローカルメンバ変数
 	grid_depth_averages_t.clear();
+
 	for(int j = 0; j < div_n; j++){
 		for(int i = 0; i < div_n; i++){
 			//切り出し範囲計算
@@ -253,17 +273,17 @@ void MainWindow::calc()
 		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
 
 		cv::Mat hist;
-		float range[] = {0.0, 5.0};
+		float range[] = {0.0, h_max};
 		const float *hrange = {range};
-		float b = 0.1; //ヒストグラムのビン幅[m]
-		int histSize = (int)(range[1]/b); //ヒストグラムのビン数(整数でよろしく)
+		int histSize = (int)(range[1]/h_b); //ヒストグラムのビン数(整数でよろしく)
+		//ヒストグラム計算(OpenCV任せ)
 		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
 
 		//集合に追加
 		Histgrams << hist;
 	}
 
-	qInfo() << "H" << Histgrams.count();
+	//モード遷移
 	mode = Mode::Wait;
 	return;
 }
@@ -305,6 +325,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	cfg.beginGroup("MAIN");
 	cfg.setValue("CountN", QVariant::fromValue(count_n));
 	cfg.setValue("DivN", QVariant::fromValue(div_n));
+	cfg.setValue("HistMax", QVariant::fromValue(h_max));
+	cfg.setValue("HistBin", QVariant::fromValue(h_b));
 	cfg.endGroup();
 	cfg.sync();
 
