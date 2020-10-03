@@ -6,7 +6,10 @@ Cameraparameter::Cameraparameter(QWidget *parent) :
 	ui(new Ui::Cameraparameter)
 {
 	ui->setupUi(this);
-	setWindowTitle("CameraParameter");
+	setWindowTitle("Camera Parameter Controller");
+
+
+	QSettings cfg("config.ini", QSettings::IniFormat);
 }
 
 Cameraparameter::~Cameraparameter()
@@ -21,14 +24,14 @@ void Cameraparameter::init(CamParams_t camparam)
 	ui->sldrGain->setValue((int)camparam.gain);
 	ui->sldrExposure->setValue((int)camparam.exposure);
 	ui->sldrIrExposure->setValue((int)camparam.lrexposure);
-	ui->sldrGain->setValue((int)camparam.lrgain);
+	ui->sldrIrGain->setValue((int)camparam.lrgain);
 
-	ui->lblSaturation->setNum(camparam.saturation);
-	ui->lblWhiteBalance->setNum(camparam.whitebalance);
-	ui->lblGain->setNum(camparam.gain);
-	ui->lblExposure->setNum(camparam.exposure);
-	ui->lblIrExposure->setNum(camparam.lrexposure);
-	ui->lblIrGain->setNum(camparam.lrgain);
+	//	ui->lblSaturation->setNum(camparam.saturation);
+	//	ui->lblWhiteBalance->setNum(camparam.whitebalance);
+	//	ui->lblGain->setNum(camparam.gain);
+	//	ui->lblExposure->setNum(camparam.exposure);
+	//	ui->lblIrExposure->setNum(camparam.lrexposure);
+	//	ui->lblIrGain->setNum(camparam.lrgain);
 
 	//store to local instance
 	this->camparam.lrexposure = camparam.lrexposure;
@@ -42,8 +45,6 @@ void Cameraparameter::init(CamParams_t camparam)
 
 void Cameraparameter::get(CamParams_t &camparam)
 {
-	qDebug() << "";
-	//copy
 	camparam = this->camparam;
 	return;
 }

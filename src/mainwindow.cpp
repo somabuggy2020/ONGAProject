@@ -24,12 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
 	h_b = cfg.value("HistBin").toFloat();
 	cfg.endGroup();
 
-
 	qRegisterMetaType<cv::Mat>();
 	qRegisterMetaType<Frames_t>();
-
-
-	mtx = new QMutex();
 
 	/***
 	 * GUIウィジェットの追加
@@ -37,9 +33,11 @@ MainWindow::MainWindow(QWidget *parent)
 
 	//CameraParmeter UI
 	camparam = new Cameraparameter(this);
-	QDockWidget *dwCamParam = new QDockWidget();
-	dwCamParam->setWidget(camparam);
-	this->addDockWidget(Qt::RightDockWidgetArea, dwCamParam);
+	camparam->setWindowFlag(Qt::Window);
+	camparam->hide();
+	//	QDockWidget *dwCamParam = new QDockWidget();
+	//	dwCamParam->setWidget(camparam);
+	//	this->addDockWidget(Qt::RightDockWidgetArea, dwCamParam);
 
 	//Control UI
 	control = new Control(this);
@@ -47,18 +45,23 @@ MainWindow::MainWindow(QWidget *parent)
 	dwControl->setWidget(control);
 	this->addDockWidget(Qt::RightDockWidgetArea, dwControl);
 
+	//ProcessingProgress UI
+	procProg = new ProcessingProgress("", this);
+	QDockWidget *dwProcProg = new QDockWidget();
+	dwProcProg->setWidget(procProg);
+	this->addDockWidget(Qt::RightDockWidgetArea, dwProcProg);
+
+	//Image UI
 	imgvwr = new ImageViewer("RGB", this);
 	imgvwr->initialize(CV_8UC3, QImage::Format::Format_BGR888);
 	QDockWidget *dwImgVwr = new QDockWidget();
 	dwImgVwr->setWidget(imgvwr);
 	this->addDockWidget(Qt::LeftDockWidgetArea, dwImgVwr);
 
-	//ProcessingProgress UI
-	procProg = new ProcessingProgress("", this);
-	QDockWidget *dwProcProg = new QDockWidget();
-	dwProcProg->setWidget(procProg);
-	this->addDockWidget(Qt::LeftDockWidgetArea, dwProcProg);
-
+	//Time show label UI
+	lblStatus = new QLabel(this);
+	lblStatus->setText("start ...");
+	ui->statusbar->addWidget(lblStatus);
 
 	/***
 	 * signals-slots
@@ -77,6 +80,13 @@ MainWindow::MainWindow(QWidget *parent)
 		mode = Mode::Measure;
 	});
 
+	connect(this, &MainWindow::updateTime, this,
+					[=](){
+		QDateTime ct = QDateTime::currentDateTime();
+		QString str = ct.toString("hh:mm:ss.zzz");
+		lblStatus->setText(str);
+	});
+
 	connect(this, &MainWindow::updateFrames, this,
 					[=](Frames_t *frames){
 		imgvwr->setImage(frames->imgAlignedRGB);
@@ -92,7 +102,6 @@ MainWindow::MainWindow(QWidget *parent)
 		ui->statusbar->removeWidget(bar);
 		bar->deleteLater();
 	});
-
 
 	/***
  *
@@ -121,6 +130,7 @@ void MainWindow::main()
 {
 	qDebug() << "Do work ...";
 	QMetaObject::invokeMethod(timer, "stop");
+	emit updateTime();
 
 	int ret = 0;
 	CamParams_t camparams;
@@ -186,7 +196,7 @@ void MainWindow::measure(Frames_t &frames)
 
 	//(1)Depth画像格子分割しながら，各格子における平均depth値を格納
 	//格納先はローカルメンバ変数
-	grid_depth_averages_t.clear();
+	QList<double> grid_depth_averages_t;
 
 	for(int j = 0; j < div_n; j++){
 		for(int i = 0; i < div_n; i++){
@@ -204,8 +214,8 @@ void MainWindow::measure(Frames_t &frames)
 			//depth値の平均値を出す
 			//cv::Scalarで受け取るけど，実質チャンネルは1なので値は一つしかないはず
 			cv::Scalar _ave = cv::mean(out);
-			double ave = _ave.val[0]; //多分1チャンネル目の平均値
-			grid_depth_averages_t << ave;		//配列に格納
+			double ave = _ave.val[0];			//多分1チャンネル目の平均値
+			grid_depth_averages_t << ave;	//配列に格納
 		}
 	}
 
@@ -243,7 +253,6 @@ void MainWindow::save()
 	}
 
 
-
 	//クローズ
 	f.close();
 	mode = Mode::Calc;
@@ -273,9 +282,10 @@ void MainWindow::calc()
 		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
 
 		cv::Mat hist;
-		float range[] = {0.0, h_max};
+		float range[] = {0.0, h_max}; //ヒストグラムのレンジ設定
 		const float *hrange = {range};
 		int histSize = (int)(range[1]/h_b); //ヒストグラムのビン数(整数でよろしく)
+
 		//ヒストグラム計算(OpenCV任せ)
 		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
 
@@ -287,7 +297,6 @@ void MainWindow::calc()
 	mode = Mode::Wait;
 	return;
 }
-
 
 
 /*!
@@ -316,7 +325,6 @@ void MainWindow::draw(Frames_t &frames)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 	isThread = false;
-	QThread::msleep(1000);
 	th->exit();
 	th->deleteLater();
 
@@ -360,4 +368,9 @@ void MainWindow::start()
 	QMetaObject::invokeMethod(timer, "start");	//タイマースタート
 	qInfo() << "Start main thread";
 	//これで、周期T[msec]でスロット関数が実行される
+}
+
+void MainWindow::on_actOpenCamParamCont_triggered()
+{
+	camparam->show();
 }

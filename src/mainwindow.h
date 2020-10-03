@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QFile>
 #include <QSettings>
+#include <QLabel>
 #include <QProgressBar>
 
 #include "ui/Control/control.h"
@@ -38,6 +39,8 @@ public:
 private slots:
 	void main();
 
+	void on_actOpenCamParamCont_triggered();
+
 private:
 	void measure(Frames_t &frames);
 	void save();
@@ -46,6 +49,7 @@ private:
 	void closeEvent(QCloseEvent *event);
 
 signals:
+	void updateTime();
 	void updateFrames(Frames_t *frames);
 	void progressMeasurement(int count);
 	void finishedMeasurement();
@@ -56,12 +60,12 @@ private:
 	Cameraparameter *camparam;
 	ProcessingProgress *procProg;
 	ImageViewer *imgvwr;
+	QLabel *lblStatus;
 	QProgressBar *bar;
 
 	QThread *th;
 	QTimer *timer;
 	bool isThread;
-	QMutex *mtx;
 
 	R200 *r200;
 
@@ -75,7 +79,6 @@ private:
 	float h_b;			//ヒストグラムのビン幅[m]
 
 
-	QList<double> grid_depth_averages_t; //時刻tにおける各格子の平均depth値
 	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
 	QList<cv::Mat> Histgrams; //ヒストグラムの実態,OpenCV型
 };

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QDebug>
 #include <QString>
+#include <QSettings>
 
 #include "../../common.h"
 
