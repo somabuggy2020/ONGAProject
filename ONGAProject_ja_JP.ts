@@ -4,99 +4,99 @@
 <context>
     <name>Cameraparameter</name>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="26"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="31"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="43"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="72"/>
         <source>color_saturation         </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="50"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="74"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="119"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="137"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="167"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="215"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="263"/>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="308"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="104"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="164"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="291"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="355"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="421"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="551"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="684"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="811"/>
         <source>0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="67"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="148"/>
         <source>255</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="85"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="196"/>
         <source>color_white_balance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="92"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="228"/>
         <source>2000</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="112"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="275"/>
         <source>8000</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="130"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="323"/>
         <source>color_gain                </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="160"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="405"/>
         <source>256</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="178"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="453"/>
         <source>color_exposure          </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="185"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="485"/>
         <source>39</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="208"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="535"/>
         <source>10000</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="226"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="586"/>
         <source>r200_lr_exposure        </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="233"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="618"/>
         <source>1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="256"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="668"/>
         <source>164</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="274"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="716"/>
         <source>r200_lr_gain           </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="281"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="748"/>
         <source>100</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/CameraParams/cameraparameter.ui" line="301"/>
+        <location filename="src/ui/CameraParams/cameraparameter.ui" line="795"/>
         <source>6399</source>
         <translation type="unfinished"></translation>
     </message>

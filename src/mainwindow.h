@@ -10,6 +10,7 @@
 
 #include "ui/Control/control.h"
 #include "ui/CameraParams/cameraparameter.h"
+#include "R200/r200.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,8 +31,11 @@ private slots:
 
 private:
 	Ui::MainWindow *ui;
+
 	Control *control;
 	Cameraparameter *camparam;
+
+	R200 *r200;
 
 	QThread *th;
 	QTimer *timer;

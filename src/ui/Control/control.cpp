@@ -23,7 +23,8 @@ Control::Control(QWidget *parent) :
 	logDepthDataPath = "NULL";
 }
 
-void Control::init(){
+void Control::init()
+{
 	emit setdivnum(ui->dividednum->value());
 	emit clickradiobotton(allbool);
 	emit set_depth(ui->depth->value());
@@ -45,15 +46,18 @@ void Control::on_dividednum_valueChanged(int arg1)
 	emit setdivnum(arg1);
 }
 
-void Control::countup(){
+void Control::countup()
+{
 	ui->datacount->setValue(ui->datacount->value() + 1);
 }
 
-void Control::clearcount(){
+void Control::clearcount()
+{
 	ui->datacount->setValue(0);
 }
 
-void Control::on_gridms_clicked(bool checked){
+void Control::on_gridms_clicked(bool checked)
+{
 	ui->allms->setChecked(!checked);
 	allbool = false;
 	emit clickradiobotton(allbool);
@@ -208,7 +212,8 @@ void Control::Getaverage(QString file){
 	emit plotdata(average, ui->depth->value());
 }
 
-QString Control::getPath(QString dirnam){
+QString Control::getPath(QString dirnam)
+{
 	//build directoryまでの絶対パスを取得し，取得したパスから目的のdirectoryまでを操作する．
 	buildDir = QDir::current();
 	orgDirPath = buildDir.path();

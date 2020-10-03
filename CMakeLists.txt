@@ -58,6 +58,6 @@ endif()
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
 	${OpenCV_LIBRARIES}
-	realsense)
+	realsense-d)
 
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})

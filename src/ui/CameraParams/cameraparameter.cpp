@@ -14,68 +14,80 @@ Cameraparameter::~Cameraparameter()
 	delete ui;
 }
 
-void Cameraparameter::init(CamParam_t camerapara)
+void Cameraparameter::init(CamParam_t camparam)
 {
-	ui->R200lr_exposure->setValue((int)camerapara.lrexposure);
-	ui->R200lr_gain->setValue((int)camerapara.lrgain);
-	ui->Saturation->setValue((int)camerapara.saturation);
-	ui->Whitebalance->setValue((int)camerapara.whitebalance);
-	ui->Color_gain->setValue((int)camerapara.colorgain);
-	ui->Color_exposure->setValue((int)camerapara.colorexposure);
+	ui->sldrSaturation->setValue((int)camparam.saturation);
+	ui->sldrWhitebalance->setValue((int)camparam.whitebalance);
+	ui->sldrGain->setValue((int)camparam.colorgain);
+	ui->sldrExposure->setValue((int)camparam.colorexposure);
+	ui->sldrIrExposure->setValue((int)camparam.lrexposure);
+	ui->sldrGain->setValue((int)camparam.lrgain);
 
-	ui->r200lr_exposure->setNum(camerapara.lrexposure);
-	ui->r200lr_gain->setNum(camerapara.lrgain);
-	ui->saturation->setNum(camerapara.saturation);
-	ui->whitebalance->setNum(camerapara.whitebalance);
-	ui->color_gain->setNum(camerapara.colorgain);
-	ui->color_exposure->setNum(camerapara.colorexposure);
+	ui->lblSaturation->setNum(camparam.saturation);
+	ui->lblWhiteBalance->setNum(camparam.whitebalance);
+	ui->lblGain->setNum(camparam.colorgain);
+	ui->lblExposure->setNum(camparam.colorexposure);
+	ui->lblIrExposure->setNum(camparam.lrexposure);
+	ui->lblIrGain->setNum(camparam.lrgain);
 
-	cameraparameter.lrexposure = camerapara.lrexposure;
-	cameraparameter.lrgain = camerapara.lrgain;
-	cameraparameter.saturation = camerapara.saturation;
-	cameraparameter.whitebalance = camerapara.whitebalance;
-	cameraparameter.colorgain = camerapara.colorgain;
-	cameraparameter.colorexposure = camerapara.colorexposure;
+	//store to local instance
+	this->camparam.lrexposure = camparam.lrexposure;
+	this->camparam.lrgain = camparam.lrgain;
+	this->camparam.saturation = camparam.saturation;
+	this->camparam.whitebalance = camparam.whitebalance;
+	this->camparam.colorgain = camparam.colorgain;
+	this->camparam.colorexposure = camparam.colorexposure;
+
 }
 
-void Cameraparameter::on_Saturation_valueChanged(int value)
+
+
+
+void Cameraparameter::on_sldrSaturation_valueChanged(int value)
 {
-	ui->saturation->setNum(value);
-	cameraparameter.saturation = (double)value;
-	emit changedcamerapara(cameraparameter);
+	camparam.saturation = (double)value;
+	emit changedcamerapara(camparam);
 }
 
-void Cameraparameter::on_Whitebalance_valueChanged(int value)
+void Cameraparameter::on_sldrWhitebalance_valueChanged(int value)
 {
-	ui->whitebalance->setNum(value);
-	cameraparameter.whitebalance = (double)value;
-	emit changedcamerapara(cameraparameter);
+	camparam.whitebalance = (double)value;
+	emit changedcamerapara(camparam);
 }
 
-void Cameraparameter::on_R200lr_exposure_valueChanged(int value)
+void Cameraparameter::on_sldrGain_valueChanged(int value)
 {
-	ui->r200lr_exposure->setNum(value);
-	cameraparameter.lrexposure = (double)value;
-	emit changedcamerapara(cameraparameter);
+	camparam.lrexposure = (double)value;
+	emit changedcamerapara(camparam);
 }
 
-void Cameraparameter::on_R200lr_gain_valueChanged(int value)
+void Cameraparameter::on_sldrExposure_valueChanged(int value)
 {
-	ui->r200lr_gain->setNum(value);
-	cameraparameter.lrgain = (double)value;
-	emit changedcamerapara(cameraparameter);
+	camparam.lrgain = (double)value;
+	emit changedcamerapara(camparam);
 }
 
-void Cameraparameter::on_Color_gain_valueChanged(int value)
+void Cameraparameter::on_sldrIrExposure_valueChanged(int value)
 {
-	ui->color_gain->setNum(value);
-	cameraparameter.colorgain = (double)value;
-	emit changedcamerapara(cameraparameter);
+	camparam.colorgain = (double)value;
+	emit changedcamerapara(camparam);
 }
 
-void Cameraparameter::on_Color_exposure_valueChanged(int value)
+void Cameraparameter::on_sldrIrGain_valueChanged(int value)
 {
-	ui->color_exposure->setNum(value);
-	cameraparameter.colorexposure = (double)value;
-	emit changedcamerapara(cameraparameter);
+	camparam.colorexposure = (double)value;
+	emit changedcamerapara(camparam);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

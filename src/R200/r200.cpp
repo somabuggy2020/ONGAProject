@@ -2,7 +2,8 @@
 
 R200::R200(QObject *parent) : QObject(parent)
 {
-
+	rscxt = nullptr;
+	rsdev = nullptr;
 }
 
 /*!
@@ -11,10 +12,10 @@ R200::R200(QObject *parent) : QObject(parent)
  */
 int R200::init()
 {
+	qInfo() << "";
 	if(rscxt == nullptr) rscxt = new rs::context();
 
 	rs::log_to_file(rs::log_severity::debug, "librealsense.log");
-
 
 	if(initDevice() == -1) return -1;
 	if(initStreams() == -1) return -1;
@@ -65,6 +66,8 @@ int R200::getFrames(RGBD::Data_t &data)
  */
 int R200::initDevice(QString qsSerial)
 {
+	qInfo() << "";
+
 	try{
 		if(rscxt->get_device_count() <= 0){
 			qCritical() << "Not found RealSense device";

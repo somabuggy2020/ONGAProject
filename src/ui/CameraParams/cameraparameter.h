@@ -7,9 +7,11 @@
 
 #include "../../common.h"
 
+QT_BEGIN_NAMESPACE
 namespace Ui {
 	class Cameraparameter;
 }
+QT_END_NAMESPACE
 
 class Cameraparameter : public QWidget
 {
@@ -25,18 +27,18 @@ signals:
 	void changedcamerapara(CamParam_t);
 
 private slots:
-	void on_Saturation_valueChanged(int value);
-	void on_Whitebalance_valueChanged(int value);
-	void on_R200lr_exposure_valueChanged(int value);
-	void on_R200lr_gain_valueChanged(int value);
-	void on_Color_gain_valueChanged(int value);
-	void on_Color_exposure_valueChanged(int value);
+	void on_sldrSaturation_valueChanged(int value);
+	void on_sldrWhitebalance_valueChanged(int value);
+	void on_sldrGain_valueChanged(int value);
+	void on_sldrExposure_valueChanged(int value);
+	void on_sldrIrExposure_valueChanged(int value);
+	void on_sldrIrGain_valueChanged(int value);
 
 private:
 	Ui::Cameraparameter *ui;
 
 public:
-	CamParam_t cameraparameter;
+	CamParam_t camparam;
 };
 
 #endif // CAMERAPARAMETER_H
