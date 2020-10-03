@@ -16,8 +16,9 @@
 #include <QLabel>
 #include <QProgressBar>
 
-#include "ui/Control/control.h"
 #include "ui/CameraParams/cameraparameter.h"
+#include "ui/ControlPanel/controlpanel.h"
+#include "ui/Control/control.h"
 #include "ui/ProcessingProgress/processingprogress.h"
 #include "ui/ImageViewer/imageviewer.h"
 #include "R200/r200.h"
@@ -51,13 +52,16 @@ private:
 signals:
 	void updateTime();
 	void updateFrames(Frames_t *frames);
+
+	void startMeasurement();
 	void progressMeasurement(int count);
 	void finishedMeasurement();
 
 private:
 	Ui::MainWindow *ui;
-	Control *control;
 	Cameraparameter *camparam;
+	ControlPanel *controlPanel;
+	//	Control *control;
 	ProcessingProgress *procProg;
 	ImageViewer *imgvwr;
 	QLabel *lblStatus;

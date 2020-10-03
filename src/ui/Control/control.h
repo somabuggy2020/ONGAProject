@@ -61,7 +61,6 @@ private slots:
 private:
 	Ui::Control *ui;
 	bool allbool;
-	//	int width_divied;//分割数
 	double tvalue;//test用真値
 	//double inclination;	//傾き
 	//double intercept;		//切片

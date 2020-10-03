@@ -39,11 +39,17 @@ MainWindow::MainWindow(QWidget *parent)
 	//	dwCamParam->setWidget(camparam);
 	//	this->addDockWidget(Qt::RightDockWidgetArea, dwCamParam);
 
+	//
+	controlPanel = new ControlPanel(this);
+	QDockWidget *dwControlPanel = new QDockWidget();
+	dwControlPanel->setWidget(controlPanel);
+	this->addDockWidget(Qt::RightDockWidgetArea, dwControlPanel);
+
 	//Control UI
-	control = new Control(this);
-	QDockWidget *dwControl = new QDockWidget();
-	dwControl->setWidget(control);
-	this->addDockWidget(Qt::RightDockWidgetArea, dwControl);
+	//	control = new Control(this);
+	//	QDockWidget *dwControl = new QDockWidget();
+	//	dwControl->setWidget(control);
+	//	this->addDockWidget(Qt::RightDockWidgetArea, dwControl);
 
 	//ProcessingProgress UI
 	procProg = new ProcessingProgress("", this);
@@ -66,18 +72,25 @@ MainWindow::MainWindow(QWidget *parent)
 	/***
 	 * signals-slots
 	 ***/
-	connect(control, &Control::setdivnum, this,
-					[=](int n){
-		div_n = n;
+	connect(controlPanel, &ControlPanel::On_start_clicked, this,
+					[=](){
+		mode = Mode::Measure;
+		emit startMeasurement();
 	});
 
-	connect(procProg, &ProcessingProgress::start, this,
+	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
 					[=](){
-		bar = new QProgressBar(this);
-		ui->statusbar->addWidget(bar);
-		bar->setMinimum(0);
-		bar->setMaximum(count_n);
-		mode = Mode::Measure;
+		grid_depth_averages_T.clear();
+	});
+
+	connect(controlPanel, &ControlPanel::On_DivN_changed, this,
+					[=](int arg){
+		div_n = arg;
+	});
+
+	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
+					[=](int arg){
+		count_n = arg;
 	});
 
 	connect(this, &MainWindow::updateTime, this,
@@ -91,6 +104,13 @@ MainWindow::MainWindow(QWidget *parent)
 					[=](Frames_t *frames){
 		imgvwr->setImage(frames->imgAlignedRGB);
 	},Qt::BlockingQueuedConnection);
+
+	connect(this, &MainWindow::startMeasurement, this,
+					[=](){
+		bar = new QProgressBar(this);
+		ui->statusbar->addWidget(bar);
+		bar->setRange(0, count_n);
+	});
 
 	connect(this, &MainWindow::progressMeasurement, this,
 					[=](int count){
@@ -154,7 +174,7 @@ void MainWindow::main()
 		case Mode::Wait:
 			break;
 		case Mode::Measure:
-			measure(frames); //update grid_depth_averages
+			measure(frames);
 			break;
 		case Mode::Save:
 			save();
@@ -221,7 +241,7 @@ void MainWindow::measure(Frames_t &frames)
 
 	grid_depth_averages_T << grid_depth_averages_t;
 
-	//計測回数がNUM_MEASUREに達したら計測終了
+	//計測回数がNUM_MEASUREに達したら計測終了,Saveモードに移行する
 	if(grid_depth_averages_T.length() >= count_n){
 		mode = Mode::Save; //モード遷移
 		emit finishedMeasurement();
@@ -252,9 +272,10 @@ void MainWindow::save()
 		return;
 	}
 
-
 	//クローズ
 	f.close();
+
+	//保存終了したのでCalcモードへ遷移
 	mode = Mode::Calc;
 	return;
 }
@@ -293,7 +314,7 @@ void MainWindow::calc()
 		Histgrams << hist;
 	}
 
-	//モード遷移
+	//モード遷移,待機状態
 	mode = Mode::Wait;
 	return;
 }
@@ -337,8 +358,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	cfg.setValue("HistBin", QVariant::fromValue(h_b));
 	cfg.endGroup();
 	cfg.sync();
-
-
 
 	qInfo() << "System closed";
 }

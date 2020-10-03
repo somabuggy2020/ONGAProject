@@ -52,6 +52,9 @@ add_executable(ONGA_Depth
 	src/ui/ImageViewer/imageviewer.cpp
 	src/ui/ImageViewer/imageviewer.h
 	src/ui/ImageViewer/imageviewer.ui
+	src/ui/ControlPanel/controlpanel.cpp
+	src/ui/ControlPanel/controlpanel.h
+	src/ui/ControlPanel/controlpanel.ui
 	${TS_FILES}
 )
 

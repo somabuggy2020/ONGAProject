@@ -139,8 +139,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/ui/Control/control.ui" line="128"/>
-        <source>DivisionRGBImage</source>
+        <location filename="src/ui/Control/control.ui" line="131"/>
+        <source>Div N</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ControlPanel</name>
+    <message>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="19"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="31"/>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="53"/>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="66"/>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="79"/>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="92"/>
+        <source>PushButton</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="117"/>
+        <source>Count Max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/ui/ControlPanel/controlpanel.ui" line="152"/>
+        <source>Div N</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -160,8 +195,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="src/mainwindow.ui" line="38"/>
-        <source>AlignedRGB</source>
+        <location filename="src/mainwindow.ui" line="53"/>
+        <source>toolBar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="src/mainwindow.ui" line="65"/>
+        <source>OpenCamParamCont</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

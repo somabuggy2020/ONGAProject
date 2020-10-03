@@ -18,9 +18,6 @@ Control::Control(QWidget *parent) :
 
 
 
-
-	//	width_divied = ui->dividednum->value();
-
 	ui->datacount->setValue(0);
 	ui->gridms->setChecked(false);
 	ui->allms->setChecked(true);
