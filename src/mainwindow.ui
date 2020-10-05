@@ -78,6 +78,12 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3"/>
   </widget>
+  <widget class="QDockWidget" name="dwImgDepth">
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4"/>
+  </widget>
   <action name="actOpenCamParamCont">
    <property name="text">
     <string>OpenCamParamCont</string>

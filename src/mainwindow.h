@@ -67,6 +67,7 @@ private:
 	//	ProcessingProgress *procProg;
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
+	ImageViewer *imgvwrAlignedDepth;
 	QLabel *lblStatus;
 	QProgressBar *bar;
 

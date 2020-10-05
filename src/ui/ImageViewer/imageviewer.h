@@ -26,7 +26,7 @@ public:
 	int initialize(int ImageType = CV_8UC3, QImage::Format qImageFormat = QImage::Format_RGB888);	//初期化処理
 
 public slots:
-	void setImage(cv::Mat *img);
+//	void setImage(cv::Mat *img);
 	void setImage(cv::Mat img);
 
 	// QWidget interface

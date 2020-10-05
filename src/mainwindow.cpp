@@ -80,9 +80,13 @@ void MainWindow::setup()
 	imgvwrRGB->initialize(CV_8UC3, QImage::Format::Format_BGR888);
 	ui->dwImgRGB->setWidget(imgvwrRGB);
 
-	imgvwrAlignedRGB = new ImageViewer("Aligned", this);
+	imgvwrAlignedRGB = new ImageViewer("Aligned RGB", this);
 	imgvwrAlignedRGB->initialize(CV_8UC3, QImage::Format::Format_BGR888);
 	ui->dwImgAlignedRGB->setWidget(imgvwrAlignedRGB);
+
+	imgvwrAlignedDepth = new ImageViewer("Aligned Depth", this);
+	imgvwrAlignedDepth->initialize(CV_16UC1, QImage::Format::Format_Grayscale8);
+	ui->dwImgDepth->setWidget(imgvwrAlignedDepth);
 
 	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
@@ -135,6 +139,11 @@ void MainWindow::setup_signals_slots()
 					[=](Frames_t *frames){
 		imgvwrAlignedRGB->setImage(frames->imgAlignedRGB);
 	},Qt::BlockingQueuedConnection);
+
+	connect(this, &MainWindow::updateFrames, this,
+					[=](Frames_t *frames){
+		imgvwrAlignedDepth->setImage(frames->imgAlignedDepth);
+	}, Qt::BlockingQueuedConnection);
 
 	connect(this, &MainWindow::startMeasurement, this,
 					[=](){

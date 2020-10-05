@@ -23,21 +23,22 @@ int ImageViewer::initialize(int ImageType, QImage::Format qImageFormat)
 	return 0;
 }
 
-void ImageViewer::setImage(cv::Mat *img)
-{
-	//メンバに複製
-	//OpenCVはBGRフォーマット, QImageはRGBフォーマット
-	if(cvMatFormat == CV_8UC3) *(this->img) = img->clone();
-	if(cvMatFormat == CV_16UC1) img->convertTo(*(this->img), CV_8UC1);
-	if(cvMatFormat == CV_8UC1) img->copyTo(*(this->img));
-	update();	//paintEvent関数の呼び出しシグナル
-	return;
-}
+//void ImageViewer::setImage(cv::Mat *img)
+//{
+//	//メンバに複製
+//	//OpenCVはBGRフォーマット, QImageはRGBフォーマット
+//	if(cvMatFormat == CV_8UC3) *(this->img) = img->clone();
+//	if(cvMatFormat == CV_16UC1) img->convertTo(*(this->img), CV_8UC1);
+//	if(cvMatFormat == CV_8UC1) img->copyTo(*(this->img));
+//	update();	//paintEvent関数の呼び出しシグナル
+//	return;
+//}
 
 void ImageViewer::setImage(cv::Mat img)
 {
 	if(cvMatFormat == CV_8UC3) *(this->img) = img.clone();
-	if(cvMatFormat == CV_16UC1) img.convertTo(*(this->img), CV_8UC1, -255/1000, 255);
+	if(cvMatFormat == CV_16UC1) img.convertTo(*(this->img), CV_8UC1, 0.08);
+	//		if(cvMatFormat == CV_16UC1) img.copyTo(*(this->img));
 	if(cvMatFormat == CV_8UC1) img.copyTo(*(this->img));
 	update();	//paintEvent関数の呼び出しシグナル
 	return;
