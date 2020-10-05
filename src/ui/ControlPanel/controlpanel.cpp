@@ -12,6 +12,7 @@ ControlPanel::ControlPanel(QWidget *parent) :
 	cfg.beginGroup("MAIN");
 	ui->spnCountMax->setValue(cfg.value("CountN").toUInt());
 	ui->spnDivN->setValue(cfg.value("DivN").toInt());
+	ui->spnHistMax->setValue(cfg.value("HistMax").toFloat());
 	cfg.endGroup();
 }
 

@@ -29,7 +29,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 #for resource files
 file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
-file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
 
 add_executable(ONGA_Depth
 	src/main.cpp

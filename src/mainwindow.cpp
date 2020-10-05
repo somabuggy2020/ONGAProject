@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
 	//configファイル読み込み
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("MAIN");
-	count_n = cfg.value("CountN").toInt();
-	div_n = cfg.value("DivN").toInt();
+	count_n = cfg.value("CountN", 100).toInt();
+	div_n = cfg.value("DivN", 7).toInt();
 	h_max = cfg.value("HistMax").toFloat();
 	h_b = cfg.value("HistBin").toFloat();
 	cfg.endGroup();
@@ -173,7 +173,7 @@ void MainWindow::setup_signals_slots()
  */
 void MainWindow::main()
 {
-	//	qDebug() << "Do work ...";
+	qDebug() << "Do work ...";
 	QMetaObject::invokeMethod(timer, "stop");
 	emit updateTime();
 
@@ -193,12 +193,8 @@ void MainWindow::main()
 		exit(255);
 	}
 
-	//	cv::imshow("Raw RGB", frames->imgRGB);
-	//	cv::imshow("Aligned RGB", frames->imgAlignedRGB);
-	//	cv::imshow("Aligned Depth", frames->imgAlignedDepth);
-
 	//処理, モード変数modeにしたがって処理内容を切替
-	//	qDebug() << "Mode:" << Mode::str[mode];
+	qDebug() << "Mode:" << Mode::str[mode];
 
 	switch (mode) {
 		case Mode::Wait:
@@ -222,7 +218,6 @@ void MainWindow::main()
 
 	//ループ終了,タイマを再スタートしない感じで
 	if(!isThread){
-		r200->close();
 		return;
 	}
 
@@ -362,37 +357,35 @@ void MainWindow::calc()
 void MainWindow::draw(Frames_t &frames)
 {
 	//格子の描画
-	if(!frames.imgAlignedRGB.empty()){
-		for(int i = 0; i <= div_n; i++){
-			//緯線
-			cv::line(frames.imgAlignedRGB,
-							 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
-							 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
-							 cv::Scalar(0,0,255), //Red
-							 2);
-			//罫線
-			cv::line(frames.imgAlignedRGB,
-							 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
-							 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
-							 cv::Scalar(0,0,255), //Red
-							 2);
-		}
+	for(int i = 0; i <= div_n; i++){
+		//緯線
+		cv::line(frames.imgAlignedRGB,
+						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
+						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
+						 cv::Scalar(0,0,255), //Red
+						 2);
+		//		//罫線
+		cv::line(frames.imgAlignedRGB,
+						 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
+						 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
+						 cv::Scalar(0,0,255), //Red
+						 2);
 	}
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 	isThread = false;
-	th->wait(1000);
-	th->deleteLater();
+	th->exit();
+	r200->close();
 
 	//設定値書き込み
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("MAIN");
 	cfg.setValue("CountN", QVariant::fromValue(count_n));
 	cfg.setValue("DivN", QVariant::fromValue(div_n));
-	cfg.setValue("HistMax", QVariant::fromValue(h_max));
-	cfg.setValue("HistBin", QVariant::fromValue(h_b));
+	cfg.setValue("HistMax", QVariant::fromValue<float>(h_max));
+	cfg.setValue("HistBin", QVariant::fromValue<float>(h_b));
 	cfg.endGroup();
 	cfg.sync();
 

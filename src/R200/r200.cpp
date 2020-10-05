@@ -49,12 +49,13 @@ int R200::getFrames(Frames_t &frames)
 	}
 
 	try{
+		if(!rsdev->is_streaming()) return 0;
 		rsdev->wait_for_frames();
 
-		frames.imgRGB = cv::Mat(szRGB, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::rectified_color)).clone();
+		frames.imgRGB = cv::Mat(szRGB, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::color)).clone();
 		frames.imgDepth = cv::Mat(szDepth, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth)).clone();
 		frames.imgAlignedRGB = cv::Mat(szRGB2Depth, CV_8UC3, (uchar*)rsdev->get_frame_data(rs::stream::color_aligned_to_depth)).clone();
-		frames.imgAlignedDepth = cv::Mat(szDepth2RGB, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth_aligned_to_rectified_color)).clone();
+		//		frames.imgAlignedDepth = cv::Mat(szDepth2RGB, CV_16UC1, (uchar*)rsdev->get_frame_data(rs::stream::depth_aligned_to_color)).clone();
 		frames.scale = rsdev->get_depth_scale();
 	}
 	catch(const rs::error &e){
@@ -74,6 +75,7 @@ int R200::setParams(CamParams_t &camparams)
 
 void R200::close()
 {
+	qInfo() << "Close";
 	if(rsdev != nullptr){
 		if(rsdev->is_streaming()){
 			rsdev->stop();
