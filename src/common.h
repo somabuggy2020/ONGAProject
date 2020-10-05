@@ -23,10 +23,10 @@ struct CamParams_t
  */
 struct Frames_t
 {
-	cv::Mat *imgRGB;
-	cv::Mat *imgDepth;
-	cv::Mat *imgAlignedDepth;
-	cv::Mat *imgAlignedRGB;
+	cv::Mat imgRGB;
+	cv::Mat imgDepth;
+	cv::Mat imgAlignedDepth;
+	cv::Mat imgAlignedRGB;
 	//		cv::Mat *imgInfrared;
 	//    PointCloudT::Ptr pointCloud;
 	double scale;

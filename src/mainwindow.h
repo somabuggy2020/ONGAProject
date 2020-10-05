@@ -35,6 +35,8 @@ public:
 	MainWindow(QWidget *parent = nullptr);
 	~MainWindow();
 
+	void setup();
+	void setup_signals_slots();
 	void start();
 
 private slots:
@@ -62,8 +64,9 @@ private:
 	Cameraparameter *camparam;
 	ControlPanel *controlPanel;
 	//	Control *control;
-	ProcessingProgress *procProg;
-	ImageViewer *imgvwr;
+	//	ProcessingProgress *procProg;
+	ImageViewer *imgvwrRGB;
+	ImageViewer *imgvwrAlignedRGB;
 	QLabel *lblStatus;
 	QProgressBar *bar;
 
@@ -83,6 +86,7 @@ private:
 	float h_b;			//ヒストグラムのビン幅[m]
 
 
+	Frames_t *frames;
 	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
 	QList<cv::Mat> Histgrams; //ヒストグラムの実態,OpenCV型
 };

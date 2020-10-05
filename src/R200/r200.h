@@ -8,7 +8,6 @@
 
 #include <librealsense/rs.hpp>
 #include <opencv2/opencv.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "../common.h"
 
@@ -22,7 +21,7 @@ namespace RGBD
 		cv::Mat *imgAlignedRGB;
 		//		cv::Mat *imgInfrared;
 		//    PointCloudT::Ptr pointCloud;
-		double scale;
+		float scale;
 	};
 }
 

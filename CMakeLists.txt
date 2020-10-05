@@ -23,10 +23,8 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 #PCL
-find_package(PCL 1.8.1 REQUIRED EXACT)
-include_directories(${PCL_INCLUDE_DIRS})
-
-set(TS_FILES ONGAProject_ja_JP.ts)
+#find_package(PCL 1.8.1 REQUIRED EXACT)
+#include_directories(${PCL_INCLUDE_DIRS})
 
 #for resource files
 file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
@@ -55,12 +53,9 @@ add_executable(ONGA_Depth
 	src/ui/ControlPanel/controlpanel.cpp
 	src/ui/ControlPanel/controlpanel.h
 	src/ui/ControlPanel/controlpanel.ui
-	${TS_FILES}
-)
+	)
 
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
 	${OpenCV_LIBRARIES}
-	realsense-d)
-
-qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+	realsense)

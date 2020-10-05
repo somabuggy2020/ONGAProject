@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2020-10-04T00:07:35. -->
+<!-- Written by QtCreator 4.12.4, 2020-10-05T17:49:02. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -55,14 +55,6 @@
  <data>
   <variable>ProjectExplorer.Project.PluginSettings</variable>
   <valuemap type="QVariantMap">
-   <valuemap type="QVariantMap" key="AutoTest.ActiveFrameworks">
-    <value type="bool" key="AutoTest.Framework.Boost">true</value>
-    <value type="bool" key="AutoTest.Framework.GTest">true</value>
-    <value type="bool" key="AutoTest.Framework.QtQuickTest">true</value>
-    <value type="bool" key="AutoTest.Framework.QtTest">true</value>
-   </valuemap>
-   <value type="int" key="AutoTest.RunAfterBuild">0</value>
-   <value type="bool" key="AutoTest.UseGlobal">true</value>
    <valuelist type="QVariantList" key="ClangCodeModel.CustomCommandLineKey">
     <value type="QString">-fno-delayed-template-parsing</value>
    </valuelist>
@@ -141,7 +133,7 @@
      <value type="QString">QT_QMAKE_EXECUTABLE:STRING=%{Qt:qmakeExecutable}</value>
     </valuelist>
     <value type="int" key="EnableQmlDebugging">2</value>
-    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">..\buid</value>
+    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">..\build</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">
       <value type="QString" key="CMakeProjectManager.MakeStep.AdditionalArguments"></value>
@@ -254,8 +246,9 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">ONGAProject</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.ONGAProject</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">ONGAProject</value>
-    <value type="QString" key="RunConfiguration.Arguments"></value>
-    <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
+    <value type="QString" key="RunConfiguration.Arguments">C:\Users\ehaya\Documents\Qt\ONGAProject\build\ONGA_Depth.exe
+</value>
+    <value type="bool" key="RunConfiguration.Arguments.multi">true</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
@@ -263,7 +256,8 @@
     <value type="bool" key="RunConfiguration.UseMultiProcess">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
+    <value type="bool" key="RunConfiguration.UseTerminal">false</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory">C:/Users/ehaya/Documents/Qt/ONGAProject/build</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory.default"></value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.1">

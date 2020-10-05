@@ -60,6 +60,24 @@
    </attribute>
    <addaction name="actOpenCamParamCont"/>
   </widget>
+  <widget class="QDockWidget" name="dwControlPanel">
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents"/>
+  </widget>
+  <widget class="QDockWidget" name="dwImgRGB">
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2"/>
+  </widget>
+  <widget class="QDockWidget" name="dwImgAlignedRGB">
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3"/>
+  </widget>
   <action name="actOpenCamParamCont">
    <property name="text">
     <string>OpenCamParamCont</string>

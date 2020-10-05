@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "src/ui_mainwindow.h"
 
-#define THREAD_T 33
+#define THREAD_T 1
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -27,6 +27,29 @@ MainWindow::MainWindow(QWidget *parent)
 	qRegisterMetaType<cv::Mat>();
 	qRegisterMetaType<Frames_t>();
 
+	setup();
+	setup_signals_slots();
+
+	r200 = new R200();
+	if(r200->init() == -1){
+		qWarning() << "Check Realsense Device Connection";
+	}
+
+	mode = Mode::Wait;
+	frames = new Frames_t();
+	start();
+}
+
+MainWindow::~MainWindow()
+{
+	delete ui;
+}
+
+/*!
+ * \brief MainWindow::setup
+ */
+void MainWindow::setup()
+{
 	/***
 	 * GUIウィジェットの追加
 	 ***/
@@ -35,15 +58,10 @@ MainWindow::MainWindow(QWidget *parent)
 	camparam = new Cameraparameter(this);
 	camparam->setWindowFlag(Qt::Window);
 	camparam->hide();
-	//	QDockWidget *dwCamParam = new QDockWidget();
-	//	dwCamParam->setWidget(camparam);
-	//	this->addDockWidget(Qt::RightDockWidgetArea, dwCamParam);
 
-	//
+	//Control Panel UI
 	controlPanel = new ControlPanel(this);
-	QDockWidget *dwControlPanel = new QDockWidget();
-	dwControlPanel->setWidget(controlPanel);
-	this->addDockWidget(Qt::RightDockWidgetArea, dwControlPanel);
+	ui->dwControlPanel->setWidget(controlPanel);
 
 	//Control UI
 	//	control = new Control(this);
@@ -52,23 +70,31 @@ MainWindow::MainWindow(QWidget *parent)
 	//	this->addDockWidget(Qt::RightDockWidgetArea, dwControl);
 
 	//ProcessingProgress UI
-	procProg = new ProcessingProgress("", this);
-	QDockWidget *dwProcProg = new QDockWidget();
-	dwProcProg->setWidget(procProg);
-	this->addDockWidget(Qt::RightDockWidgetArea, dwProcProg);
+	//	procProg = new ProcessingProgress("", this);
+	//	QDockWidget *dwProcProg = new QDockWidget();
+	//	dwProcProg->setWidget(procProg);
+	//	this->addDockWidget(Qt::RightDockWidgetArea, dwProcProg);
 
 	//Image UI
-	imgvwr = new ImageViewer("RGB", this);
-	imgvwr->initialize(CV_8UC3, QImage::Format::Format_BGR888);
-	QDockWidget *dwImgVwr = new QDockWidget();
-	dwImgVwr->setWidget(imgvwr);
-	this->addDockWidget(Qt::LeftDockWidgetArea, dwImgVwr);
+	imgvwrRGB = new ImageViewer("RGB", this);
+	imgvwrRGB->initialize(CV_8UC3, QImage::Format::Format_BGR888);
+	ui->dwImgRGB->setWidget(imgvwrRGB);
 
-	//Time show label UI
+	imgvwrAlignedRGB = new ImageViewer("Aligned", this);
+	imgvwrAlignedRGB->initialize(CV_8UC3, QImage::Format::Format_BGR888);
+	ui->dwImgAlignedRGB->setWidget(imgvwrAlignedRGB);
+
+	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
 	lblStatus->setText("start ...");
 	ui->statusbar->addWidget(lblStatus);
+}
 
+/*!
+ * \brief MainWindow::setup_signals_slots
+ */
+void MainWindow::setup_signals_slots()
+{
 	/***
 	 * signals-slots
 	 ***/
@@ -102,7 +128,12 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(this, &MainWindow::updateFrames, this,
 					[=](Frames_t *frames){
-		imgvwr->setImage(frames->imgAlignedRGB);
+		imgvwrRGB->setImage(frames->imgRGB);
+	},Qt::BlockingQueuedConnection);
+
+	connect(this, &MainWindow::updateFrames, this,
+					[=](Frames_t *frames){
+		imgvwrAlignedRGB->setImage(frames->imgAlignedRGB);
 	},Qt::BlockingQueuedConnection);
 
 	connect(this, &MainWindow::startMeasurement, this,
@@ -122,25 +153,6 @@ MainWindow::MainWindow(QWidget *parent)
 		ui->statusbar->removeWidget(bar);
 		bar->deleteLater();
 	});
-
-	/***
- *
- ***/
-
-	r200 = new R200();
-	if(r200->init() == -1){
-		qWarning() << "Check Realsense Device Connection";
-	}
-
-	mode = Mode::Wait;
-	isThread = true;
-
-	start();
-}
-
-MainWindow::~MainWindow()
-{
-	delete ui;
 }
 
 /*!
@@ -154,7 +166,6 @@ void MainWindow::main()
 
 	int ret = 0;
 	CamParams_t camparams;
-	Frames_t frames;
 
 	//カメラパラメータの取得
 	camparam->get(camparams);
@@ -163,18 +174,20 @@ void MainWindow::main()
 	r200->setParams(camparams);
 
 	//フレームデータの更新，新規フレームを取得
-	ret = r200->getFrames(frames);
-	if(ret == -1)	qCritical() << "Check Realsense Device Connection";
+	ret = r200->getFrames(*frames);
+	if(ret == -1){
+		qCritical() << "Check Realsense Device Connection";
+		exit(255);
+	}
 
-	//処理
-	//モード変数modeにしたがって処理内容を切替
+	//処理, モード変数modeにしたがって処理内容を切替
 	qDebug() << "Mode:" << Mode::str[mode];
 
 	switch (mode) {
 		case Mode::Wait:
 			break;
 		case Mode::Measure:
-			measure(frames);
+			measure(*frames);
 			break;
 		case Mode::Save:
 			save();
@@ -187,19 +200,11 @@ void MainWindow::main()
 	}
 
 	//描画処理
-	draw(frames);
-	emit updateFrames(&frames);
-
-	//画像用メモリ空間はは必ずリリース
-	frames.imgRGB->release();
-	frames.imgDepth->release();
-	frames.imgAlignedRGB->release();
-	frames.imgAlignedDepth->release();
+	draw(*frames);
+	emit updateFrames(frames);
 
 	//ループ終了,タイマを再スタートしない感じで
-	if(!isThread){
-		return;
-	}
+	if(!isThread)	return;
 
 	QMetaObject::invokeMethod(timer, "start");
 	return;
@@ -212,7 +217,7 @@ void MainWindow::main()
 void MainWindow::measure(Frames_t &frames)
 {
 	//(0)Aligned Depth画像を複製
-	cv::Mat imgDepth = frames.imgAlignedDepth->clone();
+	cv::Mat imgDepth = frames.imgAlignedDepth.clone();
 
 	//(1)Depth画像格子分割しながら，各格子における平均depth値を格納
 	//格納先はローカルメンバ変数
@@ -329,16 +334,16 @@ void MainWindow::draw(Frames_t &frames)
 	//格子の描画
 	for(int i = 0; i <= div_n; i++){
 		//緯線
-		cv::line(*frames.imgAlignedRGB,
-						 cv::Point(frames.imgAlignedRGB->cols/div_n*i, 0), //上座標
-						 cv::Point(frames.imgAlignedRGB->cols/div_n*i, frames.imgAlignedRGB->rows),
+		cv::line(frames.imgAlignedRGB,
+						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
+						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
 						 cv::Scalar(0,0,255), //Red
 						 2);
 		//罫線
-		cv::line(*frames.imgAlignedRGB,
-						 cv::Point(0, frames.imgAlignedRGB->rows/div_n*i),
-						 cv::Point(frames.imgAlignedRGB->cols, frames.imgAlignedRGB->rows/div_n*i),
-						 cv::Scalar(0,0,255),
+		cv::line(frames.imgAlignedRGB,
+						 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
+						 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
+						 cv::Scalar(0,0,255), //Red
 						 2);
 	}
 }
@@ -368,6 +373,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::start()
 {
 	//メイン処理スレッドインスタンス作成
+	isThread = true;
 	th = new QThread();
 
 	//	vision->moveToThread(thMainProc);
