@@ -32,3 +32,5 @@ void ControlPanel::on_btnClear_clicked(){emit On_clear_clicked(); }
 
 void ControlPanel::on_spnCountMax_valueChanged(int arg1){emit On_CountMax_changed(arg1);}
 void ControlPanel::on_spnDivN_valueChanged(int arg1){emit On_DivN_changed(arg1);}
+void ControlPanel::on_spnHistMax_valueChanged(double arg1){emit On_HistMax_changed(arg1); }
+void ControlPanel::on_doubleSpinBox_valueChanged(double arg1){emit On_HistBin_changed(arg1);}

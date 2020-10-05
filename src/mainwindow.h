@@ -46,8 +46,8 @@ private slots:
 
 private:
 	void measure(Frames_t &frames);
-	void save();
-	void calc();
+	void save(Frames_t &frames);
+	void calc(Frames_t &frames);
 	void draw(Frames_t &frames);
 	void closeEvent(QCloseEvent *event);
 
@@ -58,6 +58,8 @@ signals:
 	void startMeasurement();
 	void progressMeasurement(int count);
 	void finishedMeasurement();
+
+	void finishedCalculate();
 
 private:
 	Ui::MainWindow *ui;
@@ -89,7 +91,9 @@ private:
 	QDateTime t;
 	Frames_t *frames;
 	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
-	QList<cv::Mat> Histgrams; //ヒストグラムの実態,OpenCV型
+	cv::Mat imgResAves;
+	QList<cv::Mat> matHistgram; //ヒストグラムの実態,OpenCV型
+	QList<double> maximums;			//ヒストグラムの中の最大値の集合
 };
 Q_DECLARE_METATYPE(cv::Mat)
 Q_DECLARE_METATYPE(Frames_t)

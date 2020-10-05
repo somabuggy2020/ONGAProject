@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "src/ui_mainwindow.h"
 
-#define THREAD_T 33
+#define THREAD_T 1
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 	mode = Mode::Wait;
 	t = QDateTime::currentDateTime();
 	frames = new Frames_t();
+	imgResAves = cv::Mat();
 	start();
 }
 
@@ -102,13 +103,19 @@ void MainWindow::setup_signals_slots()
 {
 	/***
 	 * signals-slots
+	 * スロット関数が増えると管理がめんどくさいのでラムダ式でまとめてある
 	 ***/
+
+	//ControlPanelのStartボタンが押されたとき
+	//モードをmeasureに遷移させる
 	connect(controlPanel, &ControlPanel::On_start_clicked, this,
 					[=](){
 		mode = Mode::Measure;
 		emit startMeasurement();
 	});
 
+	//ControlPanelのClearボタンが押されたとき
+	//時刻0～Tで計測した各グリッドのdepth平均値をクリアする
 	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
 					[=](){
 		grid_depth_averages_T.clear();
@@ -119,9 +126,19 @@ void MainWindow::setup_signals_slots()
 		div_n = arg;
 	});
 
-	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
-					[=](int arg){
-		count_n = arg;
+	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
+					[=](double arg){
+		h_max = arg;
+	});
+
+	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
+					[=](double arg){
+		h_max = arg;
+	});
+
+	connect(controlPanel, &ControlPanel::On_HistBin_changed, this,
+					[=](double arg){
+		h_b = arg;
 	});
 
 	connect(this, &MainWindow::updateTime, this,
@@ -130,6 +147,7 @@ void MainWindow::setup_signals_slots()
 		unsigned long dt = t.msecsTo(ct);
 		QString str = ct.toString("hh:mm:ss.zzz");
 		str += QString(" / %1 Hz").arg(QString::number(1/(dt/1000.0),'f',1));
+		str += QString(" Mode:%1").arg(Mode::str[mode]);
 		lblStatus->setText(str);
 		t = ct;
 	});
@@ -166,6 +184,26 @@ void MainWindow::setup_signals_slots()
 		ui->statusbar->removeWidget(bar);
 		bar->deleteLater();
 	});
+
+
+	connect(this, &MainWindow::finishedCalculate, this,
+					[=](){
+		QLayoutItem *child;
+		while((child = ui->gl->takeAt(0)) != nullptr){
+			delete child->widget();
+			delete child;
+		}
+		for(int i = 0; i < maximums.count(); i++){
+			int x = i%div_n;
+			int y = i/div_n;
+			QLabel *lbl = new QLabel();
+			lbl->setText(QString::number(maximums[i]));
+			lbl->setAlignment(Qt::AlignHCenter);
+			lbl->setAlignment(Qt::AlignVCenter);
+			lbl->setFrameShape(QFrame::Shape::WinPanel);
+			ui->gl->addWidget(lbl, y, x);
+		}
+	});
 }
 
 /*!
@@ -173,7 +211,7 @@ void MainWindow::setup_signals_slots()
  */
 void MainWindow::main()
 {
-	qDebug() << "Do work ...";
+	//	qDebug() << "Do work ...";
 	QMetaObject::invokeMethod(timer, "stop");
 	emit updateTime();
 
@@ -193,8 +231,11 @@ void MainWindow::main()
 		exit(255);
 	}
 
+	//格子描画処理
+	draw(*frames);
+
 	//処理, モード変数modeにしたがって処理内容を切替
-	qDebug() << "Mode:" << Mode::str[mode];
+	//	qDebug() << "Mode:" << Mode::str[mode];
 
 	switch (mode) {
 		case Mode::Wait:
@@ -203,17 +244,15 @@ void MainWindow::main()
 			measure(*frames);
 			break;
 		case Mode::Save:
-			save();
+			save(*frames);
 			break;
 		case Mode::Calc:
-			calc();
+			calc(*frames);
 			break;
 		default:
 			break;
 	}
 
-	//描画処理
-	draw(*frames);
 	emit updateFrames(frames);
 
 	//ループ終了,タイマを再スタートしない感じで
@@ -282,10 +321,8 @@ void MainWindow::measure(Frames_t &frames)
 /*!
  * \brief MainWindow::save
  */
-void MainWindow::save()
+void MainWindow::save(Frames_t &frames)
 {
-	//	qDebug() << grid_depth_averages_T;
-
 	//現在時刻取得
 	QDateTime currentTime = QDateTime::currentDateTime();
 
@@ -312,13 +349,13 @@ void MainWindow::save()
 
 /*!
  * \brief MainWindow::calc
- * 各グリッドごとのdepth値のヒストグラムを作成する
+ * 各グリッドごとのdepth値のヒストグラムを作成する0
  */
-void MainWindow::calc()
+void MainWindow::calc(Frames_t &frames)
 {
-	qInfo() << "Calculate histgram";
+	//	qInfo() << "Calculate histgram";
 
-	Histgrams.clear();
+	matHistgram.clear();
 
 	//頑張ってcv::Mat型にdepth平均値の時系列データを挿入する
 	for(int i = 0; i < div_n*div_n; i++){ //i番目のgrid
@@ -341,8 +378,36 @@ void MainWindow::calc()
 		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
 
 		//集合に追加
-		Histgrams << hist;
+		matHistgram << hist;
 	}
+
+	maximums.clear();
+	for(int i = 0; i < matHistgram.count(); i++){
+		double min, max;
+		cv::Point minLoc, maxLoc;
+		min=max=-1;
+		cv::minMaxLoc(matHistgram[i], &min, &max, &minLoc, &maxLoc);
+		//		qInfo() << i << min << max << minLoc.y+h_b << maxLoc.y*h_b;
+		maximums << maxLoc.y*h_b;
+	}
+
+	//計測結果について画像で作成、表示する
+	//	imgResAves = frames.imgAlignedRGB.clone();
+
+	//	std::string str = std::string("%.2f",_H[0]);
+	//	cv::putText(imgResAves,
+	//							cv::String(str.c_str()),
+	//							cv::Point(0, 50),
+	//							cv::FONT_HERSHEY_PLAIN,
+	//							1.0,
+	//							cv::Scalar(0,0,255),
+	//							2);
+
+	//	cv::imshow("Depth Result", imgResAves);
+	//	cv::waitKey(-1);
+	//	cv::destroyWindow("Depth Result");
+
+	emit finishedCalculate();
 
 	//モード遷移,待機状態
 	mode = Mode::Wait;

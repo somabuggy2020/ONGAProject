@@ -154,12 +154,12 @@ int R200::initStreams()
 	try{
 		//RGB画像ストリーム起動
 		//		rsdev->enable_stream(rs::stream::color, rs::preset::best_quality);
-		rsdev->enable_stream(rs::stream::color, 640, 480, rs::format::bgr8, 15);
+		rsdev->enable_stream(rs::stream::color, 640, 480, rs::format::bgr8, 60);
 		//				rsDev->enable_stream(rs::stream::color,320,240,rs::format::rgb8,30);
 
 		//depthストリーム起動
-//		rsdev->enable_stream(rs::stream::depth, rs::preset::best_quality);
-		rsdev->enable_stream(rs::stream::depth, 480, 360, rs::format::z16, 30);
+		rsdev->enable_stream(rs::stream::depth, rs::preset::best_quality);
+//		rsdev->enable_stream(rs::stream::depth, 480, 360, rs::format::z16, 30);
 
 		//画像サイズ保存
 		szRGB = cv::Size(rsdev->get_stream_width(rs::stream::rectified_color),

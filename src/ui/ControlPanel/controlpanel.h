@@ -24,11 +24,17 @@ private slots:
 	void on_spnCountMax_valueChanged(int arg1);
 	void on_spnDivN_valueChanged(int arg1);
 
+	void on_spnHistMax_valueChanged(double arg1);
+
+	void on_doubleSpinBox_valueChanged(double arg1);
+
 signals:
 	void On_start_clicked();
 	void On_clear_clicked();
 	void On_CountMax_changed(int arg);
 	void On_DivN_changed(int arg);
+	void On_HistMax_changed(double arg);
+	void On_HistBin_changed(double arg);
 
 private:
 	Ui::ControlPanel *ui;
