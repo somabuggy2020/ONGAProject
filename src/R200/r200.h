@@ -34,6 +34,7 @@ public:
 	int init();
 	int getFrames(Frames_t &frames);
 	int setParams(CamParams_t &camparams);
+	void close();
 
 private:
 	int initDevice(QString qsSerial="none");

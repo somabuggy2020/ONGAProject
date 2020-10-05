@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>239</width>
-    <height>315</height>
+    <width>215</width>
+    <height>317</height>
    </rect>
   </property>
   <property name="font">
@@ -19,12 +19,27 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>3</number>
+   </property>
+   <property name="leftMargin">
+    <number>5</number>
+   </property>
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
    <item>
     <widget class="QPushButton" name="btnStart">
      <property name="minimumSize">
       <size>
        <width>90</width>
-       <height>40</height>
+       <height>60</height>
       </size>
      </property>
      <property name="text">
@@ -41,12 +56,24 @@
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>5</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>5</number>
+      </property>
       <item row="0" column="0">
        <widget class="QPushButton" name="btnClear">
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>35</height>
+          <height>50</height>
          </size>
         </property>
         <property name="text">
@@ -59,7 +86,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>35</height>
+          <height>50</height>
          </size>
         </property>
         <property name="text">
@@ -72,7 +99,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>35</height>
+          <height>50</height>
          </size>
         </property>
         <property name="text">
@@ -85,7 +112,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>35</height>
+          <height>50</height>
          </size>
         </property>
         <property name="text">
@@ -110,6 +137,21 @@
       </property>
       <property name="formAlignment">
        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+      </property>
+      <property name="horizontalSpacing">
+       <number>7</number>
+      </property>
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>5</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>5</number>
       </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label">

@@ -78,7 +78,6 @@ private:
 	R200 *r200;
 
 	QString path;
-	int mode;
 
 	//config用パラメータ
 	int count_n;	//計測最大数
@@ -86,7 +85,8 @@ private:
 	float h_max;	//ヒストグラムの最大値[m]
 	float h_b;			//ヒストグラムのビン幅[m]
 
-
+	int mode;
+	QDateTime t;
 	Frames_t *frames;
 	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
 	QList<cv::Mat> Histgrams; //ヒストグラムの実態,OpenCV型

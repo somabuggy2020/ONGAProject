@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 project(ONGAProject LANGUAGES CXX)
 
+set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
@@ -11,7 +12,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Core Widgets LinguistTools REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
 #librealsense
 include_directories(C:\\librealsense1.12.4\\include)

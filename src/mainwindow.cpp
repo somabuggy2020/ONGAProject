@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "src/ui_mainwindow.h"
 
-#define THREAD_T 1
+#define THREAD_T 33
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
 	}
 
 	mode = Mode::Wait;
+	t = QDateTime::currentDateTime();
 	frames = new Frames_t();
 	start();
 }
@@ -126,8 +127,11 @@ void MainWindow::setup_signals_slots()
 	connect(this, &MainWindow::updateTime, this,
 					[=](){
 		QDateTime ct = QDateTime::currentDateTime();
+		unsigned long dt = t.msecsTo(ct);
 		QString str = ct.toString("hh:mm:ss.zzz");
+		str += QString(" / %1 Hz").arg(QString::number(1/(dt/1000.0),'f',1));
 		lblStatus->setText(str);
+		t = ct;
 	});
 
 	connect(this, &MainWindow::updateFrames, this,
@@ -142,7 +146,7 @@ void MainWindow::setup_signals_slots()
 
 	connect(this, &MainWindow::updateFrames, this,
 					[=](Frames_t *frames){
-		imgvwrAlignedDepth->setImage(frames->imgAlignedDepth);
+		imgvwrAlignedDepth->setImage(frames->imgDepth);
 	}, Qt::BlockingQueuedConnection);
 
 	connect(this, &MainWindow::startMeasurement, this,
@@ -169,7 +173,7 @@ void MainWindow::setup_signals_slots()
  */
 void MainWindow::main()
 {
-	qDebug() << "Do work ...";
+	//	qDebug() << "Do work ...";
 	QMetaObject::invokeMethod(timer, "stop");
 	emit updateTime();
 
@@ -177,10 +181,10 @@ void MainWindow::main()
 	CamParams_t camparams;
 
 	//カメラパラメータの取得
-	camparam->get(camparams);
+	//	camparam->get(camparams);
 
 	//カメラパラメータのセット
-	r200->setParams(camparams);
+	//	r200->setParams(camparams);
 
 	//フレームデータの更新，新規フレームを取得
 	ret = r200->getFrames(*frames);
@@ -189,8 +193,12 @@ void MainWindow::main()
 		exit(255);
 	}
 
+	//	cv::imshow("Raw RGB", frames->imgRGB);
+	//	cv::imshow("Aligned RGB", frames->imgAlignedRGB);
+	//	cv::imshow("Aligned Depth", frames->imgAlignedDepth);
+
 	//処理, モード変数modeにしたがって処理内容を切替
-	qDebug() << "Mode:" << Mode::str[mode];
+	//	qDebug() << "Mode:" << Mode::str[mode];
 
 	switch (mode) {
 		case Mode::Wait:
@@ -213,7 +221,10 @@ void MainWindow::main()
 	emit updateFrames(frames);
 
 	//ループ終了,タイマを再スタートしない感じで
-	if(!isThread)	return;
+	if(!isThread){
+		r200->close();
+		return;
+	}
 
 	QMetaObject::invokeMethod(timer, "start");
 	return;
@@ -225,10 +236,10 @@ void MainWindow::main()
  */
 void MainWindow::measure(Frames_t &frames)
 {
-	//(0)Aligned Depth画像を複製
-	cv::Mat imgDepth = frames.imgAlignedDepth.clone();
+	//Depth画像を複製
+	cv::Mat imgDepth = frames.imgDepth.clone();
 
-	//(1)Depth画像格子分割しながら，各格子における平均depth値を格納
+	//Depth画像格子分割しながら，各格子における平均depth値を格納
 	//格納先はローカルメンバ変数
 	QList<double> grid_depth_averages_t;
 
@@ -241,13 +252,20 @@ void MainWindow::measure(Frames_t &frames)
 															 imgDepth.rows/div_n);
 
 			//切り出し処理
-			cv::Mat _out(imgDepth, rect);
+			cv::Mat _out(imgDepth, rect); //また16UC1
 			cv::Mat out;
-			_out.convertTo(out, CV_32FC1, frames.scale); //16bit value to float[m]
+			_out.convertTo(out, CV_32FC1, frames.scale); //16bit value to 32bit-float[m]
+
+			//マスク作成
+			cv::Mat mask;
+			cv::threshold(out, mask, 0.01, 1, cv::THRESH_BINARY);
+			mask.convertTo(mask, CV_8UC1);
 
 			//depth値の平均値を出す
-			//cv::Scalarで受け取るけど，実質チャンネルは1なので値は一つしかないはず
-			cv::Scalar _ave = cv::mean(out);
+			//cv::Scalar(4次元配列)で受け取るけど，実質チャンネルは1なので値は一つしかないはず
+			//depth値の取れていないピクセルに関しては計算に含めないようにしないと平均値の誤差につながる
+			//なのでmaskをかけてある maskにおける値が1のところだけ計算している
+			cv::Scalar _ave = cv::mean(out, mask);
 			double ave = _ave.val[0];			//多分1チャンネル目の平均値
 			grid_depth_averages_t << ave;	//配列に格納
 		}
@@ -258,6 +276,7 @@ void MainWindow::measure(Frames_t &frames)
 	//計測回数がNUM_MEASUREに達したら計測終了,Saveモードに移行する
 	if(grid_depth_averages_T.length() >= count_n){
 		mode = Mode::Save; //モード遷移
+		//		mode = Mode::Wait;
 		emit finishedMeasurement();
 	}
 
@@ -270,6 +289,8 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::save()
 {
+	//	qDebug() << grid_depth_averages_T;
+
 	//現在時刻取得
 	QDateTime currentTime = QDateTime::currentDateTime();
 
@@ -341,26 +362,28 @@ void MainWindow::calc()
 void MainWindow::draw(Frames_t &frames)
 {
 	//格子の描画
-	for(int i = 0; i <= div_n; i++){
-		//緯線
-		cv::line(frames.imgAlignedRGB,
-						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
-						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
-						 cv::Scalar(0,0,255), //Red
-						 2);
-		//罫線
-		cv::line(frames.imgAlignedRGB,
-						 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
-						 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
-						 cv::Scalar(0,0,255), //Red
-						 2);
+	if(!frames.imgAlignedRGB.empty()){
+		for(int i = 0; i <= div_n; i++){
+			//緯線
+			cv::line(frames.imgAlignedRGB,
+							 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
+							 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
+							 cv::Scalar(0,0,255), //Red
+							 2);
+			//罫線
+			cv::line(frames.imgAlignedRGB,
+							 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
+							 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
+							 cv::Scalar(0,0,255), //Red
+							 2);
+		}
 	}
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 	isThread = false;
-	th->exit();
+	th->wait(1000);
 	th->deleteLater();
 
 	//設定値書き込み
@@ -394,11 +417,13 @@ void MainWindow::start()
 
 	//timerのtimeoutシグナルとスロット関数の接続
 	//Qt::DirectConnectionオプションによって,timerが所属するスレッド上でスロット関数が処理されるはず,,,
-	connect(timer, SIGNAL(timeout()),this,
-					SLOT(main()),Qt::DirectConnection);
+	connect(timer, SIGNAL(timeout()),
+					this, SLOT(main()),
+					Qt::DirectConnection);
 
 	//スレッド起動,イベントループ開始
 	th->start();
+
 	QMetaObject::invokeMethod(timer, "start");	//タイマースタート
 	qInfo() << "Start main thread";
 	//これで、周期T[msec]でスロット関数が実行される
