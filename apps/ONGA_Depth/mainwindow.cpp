@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 	QDir dir;
 	dir.mkdir("Log");
 	dir.mkdir("Log/DepthData");
-	path = QString("./Log/DepthData/");
+	DepthDataPath = QString("./Log/DepthData/");
 
 	//Load config
 	//"MAIN" group values
@@ -307,26 +307,44 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::save(Frames_t &frames)
 {
-	//現在時刻取得
 	QDateTime currentTime = QDateTime::currentDateTime();
 
-	//csvファイル名作成
 	QString fname = currentTime.toString("yyyy-MM-dd-hh-mm-ss");
 	fname += QString(".csv");
 
-	//csvファイル作成
 	QFile f;
-	f.setFileName(path + "/" + fname);
+	f.setFileName(DepthDataPath + "/" + fname);
+
 	if(!f.open(QFile::WriteOnly | QFile::Text)){
 		qCritical() << f.errorString();
 		mode = Mode::Wait;
 		return;
 	}
 
-	//クローズ
-	f.close();
+	QString header;
+	header += QString(",");
+	for(int i = 0; i < div_n*div_n; i++){
+		header += QString("%1,").arg(i);
+	}
+	header += QString("\n");
+	f.write(header.toStdString().c_str());
 
-	//保存終了したのでCalcモードへ遷移
+
+	for(int i = 0; i < grid_depth_averages_T.count(); i++){
+		QString line;
+		line += QString("%1,").arg(i);
+
+		QList<double> depth_t = grid_depth_averages_T[i];
+		Q_FOREACH(double depth, depth_t){
+			line += QString("%1,").arg(depth);
+		}
+		line += QString("\n");
+
+		f.write(line.toStdString().c_str());
+	}
+
+	//file close
+	f.close();
 	mode = Mode::Calc;
 	return;
 }
@@ -337,31 +355,25 @@ void MainWindow::save(Frames_t &frames)
  */
 void MainWindow::calc(Frames_t &frames)
 {
-	//	qInfo() << "Calculate histgram";
-
 	matHistgram.clear();
 
-	//頑張ってcv::Mat型にdepth平均値の時系列データを挿入する
-	for(int i = 0; i < div_n*div_n; i++){ //i番目のgrid
-
+	for(int i = 0; i < div_n*div_n; i++){
 		float *averages = new float[grid_depth_averages_T.length()];
 		for(int t = 0; t < grid_depth_averages_T.length(); t++){ //時刻tのi番目のグリッド
 			float val = (float)grid_depth_averages_T[t][i];
 			averages[t] = val;
 		}
 
-		//ヒストグラム作成のためのMat型作成
 		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
 
 		cv::Mat hist;
-		float range[] = {0.0, h_max}; //ヒストグラムのレンジ設定
+		float range[] = {0.0, h_max};
 		const float *hrange = {range};
-		int histSize = (int)(range[1]/h_b); //ヒストグラムのビン数(整数でよろしく)
+		int histSize = (int)(range[1]/h_b);
 
-		//ヒストグラム計算(OpenCV任せ)
+		//calculate histgram by OpenCV
 		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
 
-		//集合に追加
 		matHistgram << hist;
 	}
 
@@ -370,30 +382,13 @@ void MainWindow::calc(Frames_t &frames)
 		double min, max;
 		cv::Point minLoc, maxLoc;
 		min=max=-1;
+		//search value of maximum degree position
 		cv::minMaxLoc(matHistgram[i], &min, &max, &minLoc, &maxLoc);
-		//		qInfo() << i << min << max << minLoc.y+h_b << maxLoc.y*h_b;
-		maximums << maxLoc.y*h_b;
+		maximums << maxLoc.y*(h_b)/2.0; //get value [m]
 	}
-
-	//計測結果について画像で作成、表示する
-	//	imgResAves = frames.imgAlignedRGB.clone();
-
-	//	std::string str = std::string("%.2f",_H[0]);
-	//	cv::putText(imgResAves,
-	//							cv::String(str.c_str()),
-	//							cv::Point(0, 50),
-	//							cv::FONT_HERSHEY_PLAIN,
-	//							1.0,
-	//							cv::Scalar(0,0,255),
-	//							2);
-
-	//	cv::imshow("Depth Result", imgResAves);
-	//	cv::waitKey(-1);
-	//	cv::destroyWindow("Depth Result");
 
 	emit finishedCalculate();
 
-	//モード遷移,待機状態
 	mode = Mode::Wait;
 	return;
 }

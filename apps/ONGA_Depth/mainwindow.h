@@ -74,26 +74,26 @@ private:
 	QTimer *timer;
 	bool isThread;
 
+	QString DepthDataPath;
+
 	R200 *r200;
 
-	QString path;
-
-	//config用パラメータ
-	int count_max;	//計測最大数
-	int div_n;		//平面分割数
-	float h_max;	//ヒストグラムの最大値[m]
-	float h_b;			//ヒストグラムのビン幅[m]
+	int count_max;
+	int div_n;
+	float h_max;
+	float h_b;
 
 	int mode;
 	QDateTime t;
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
-	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
+	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
-	QList<cv::Mat> matHistgram; //ヒストグラムの実態,OpenCV型
-	QList<double> maximums;			//ヒストグラムの中の最大値の集合
+	QList<cv::Mat> matHistgram;
+	QList<double> maximums;
 };
+
 Q_DECLARE_METATYPE(cv::Mat)
 Q_DECLARE_METATYPE(Frames_t)
 #endif // MAINWINDOW_H
