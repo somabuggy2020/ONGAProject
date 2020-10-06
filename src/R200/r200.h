@@ -9,21 +9,7 @@
 #include <librealsense/rs.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "../common.h"
-
-namespace RGBD
-{
-	struct Data_t
-	{
-		cv::Mat *imgRGB;
-		cv::Mat *imgDepth;
-		cv::Mat *imgAlignedDepth;
-		cv::Mat *imgAlignedRGB;
-		//		cv::Mat *imgInfrared;
-		//    PointCloudT::Ptr pointCloud;
-		float scale;
-	};
-}
+#include "difinition.h"
 
 class R200 : public QObject
 {

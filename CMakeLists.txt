@@ -32,22 +32,17 @@ file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
 file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
 
 add_executable(ONGA_Depth
-	src/main.cpp
-	src/mainwindow.cpp
-	src/mainwindow.h
-	src/mainwindow.ui
-	src/common.h
+	apps/ONGA_Depth/main.cpp
+	apps/ONGA_Depth/mainwindow.cpp
+	apps/ONGA_Depth/mainwindow.h
+	apps/ONGA_Depth/mainwindow.ui
+	apps/ONGA_Depth/common.h
 	src/R200/r200.cpp
 	src/R200/r200.h
-	src/ui/Control/control.cpp
-	src/ui/Control/control.h
-	src/ui/Control/control.ui
-	src/ui/CameraParams/cameraparameter.cpp
-	src/ui/CameraParams/cameraparameter.h
-	src/ui/CameraParams/cameraparameter.ui
-	src/ui/ProcessingProgress/processingprogress.cpp
-	src/ui/ProcessingProgress/processingprogress.h
-	src/ui/ProcessingProgress/processingprogress.ui
+	src/R200/difinition.h
+	src/ui/CameraParamControl/cameraparamcontrol.cpp
+	src/ui/CameraParamControl/cameraparamcontrol.h
+	src/ui/CameraParamControl/cameraparamcontrol.ui
 	src/ui/ImageViewer/imageviewer.cpp
 	src/ui/ImageViewer/imageviewer.h
 	src/ui/ImageViewer/imageviewer.ui

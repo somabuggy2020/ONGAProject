@@ -6,41 +6,44 @@
 #include <QString>
 #include <QSettings>
 
-#include "../../common.h"
+#include "../../R200/difinition.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
-	class Cameraparameter;
+	class CameraParamControl;
 }
 QT_END_NAMESPACE
 
-class Cameraparameter : public QWidget
+class CameraParamControl : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit Cameraparameter(QWidget *parent = 0);
-	~Cameraparameter();
+	explicit CameraParamControl(QWidget *parent = 0);
+	~CameraParamControl();
 
 	void init(CamParams_t);
-	void get(CamParams_t &camparam);
 
 signals:
-	void changedcamerapara(CamParams_t);
+	void On_CameraParams_changed(CamParams_t &camparams);
 
 private slots:
-	void on_sldrSaturation_valueChanged(int value);
-	void on_sldrWhitebalance_valueChanged(int value);
-	void on_sldrGain_valueChanged(int value);
+
 	void on_sldrExposure_valueChanged(int value);
+
+	void on_sldrGain_valueChanged(int value);
+
+	void on_sldrWhitebalance_valueChanged(int value);
+
 	void on_sldrIrExposure_valueChanged(int value);
+
 	void on_sldrIrGain_valueChanged(int value);
 
 private:
-	Ui::Cameraparameter *ui;
+	Ui::CameraParamControl *ui;
 
 public:
-	CamParams_t camparam;
+	CamParams_t camparams;
 };
 
 #endif // CAMERAPARAMETER_H

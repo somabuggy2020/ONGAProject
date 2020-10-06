@@ -9,16 +9,17 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui->setupUi(this);
 
-	//保存ディレクトリ作成
+	//Make log directry
 	QDir dir;
 	dir.mkdir("Log");
 	dir.mkdir("Log/DepthData");
 	path = QString("./Log/DepthData/");
 
-	//configファイル読み込み
+	//Load config
+	//"MAIN" group values
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("MAIN");
-	count_n = cfg.value("CountN", 100).toInt();
+	count_max = cfg.value("CountN", 100).toInt();
 	div_n = cfg.value("DivN", 7).toInt();
 	h_max = cfg.value("HistMax").toFloat();
 	h_b = cfg.value("HistBin").toFloat();
@@ -37,9 +38,12 @@ MainWindow::MainWindow(QWidget *parent)
 
 	mode = Mode::Wait;
 	t = QDateTime::currentDateTime();
+	camparams = camParamControl->camparams;
+	isCamParamChanged = false;
 	frames = new Frames_t();
 	imgResAves = cv::Mat();
 	start();
+
 }
 
 MainWindow::~MainWindow()
@@ -53,29 +57,17 @@ MainWindow::~MainWindow()
 void MainWindow::setup()
 {
 	/***
-	 * GUIウィジェットの追加
+	 * setup UI widgets
 	 ***/
 
 	//CameraParmeter UI
-	camparam = new Cameraparameter(this);
-	camparam->setWindowFlag(Qt::Window);
-	camparam->hide();
+	camParamControl = new CameraParamControl(this);
+	camParamControl->setWindowFlag(Qt::Window);
+	camParamControl->hide();
 
 	//Control Panel UI
 	controlPanel = new ControlPanel(this);
 	ui->dwControlPanel->setWidget(controlPanel);
-
-	//Control UI
-	//	control = new Control(this);
-	//	QDockWidget *dwControl = new QDockWidget();
-	//	dwControl->setWidget(control);
-	//	this->addDockWidget(Qt::RightDockWidgetArea, dwControl);
-
-	//ProcessingProgress UI
-	//	procProg = new ProcessingProgress("", this);
-	//	QDockWidget *dwProcProg = new QDockWidget();
-	//	dwProcProg->setWidget(procProg);
-	//	this->addDockWidget(Qt::RightDockWidgetArea, dwProcProg);
 
 	//Image UI
 	imgvwrRGB = new ImageViewer("RGB", this);
@@ -103,22 +95,28 @@ void MainWindow::setup_signals_slots()
 {
 	/***
 	 * signals-slots
-	 * スロット関数が増えると管理がめんどくさいのでラムダ式でまとめてある
 	 ***/
 
-	//ControlPanelのStartボタンが押されたとき
-	//モードをmeasureに遷移させる
+	connect(camParamControl, &CameraParamControl::On_CameraParams_changed, this,
+					[=](CamParams_t &camparams){
+		this->camparams = camparams;
+		isCamParamChanged = true;
+	});
+
 	connect(controlPanel, &ControlPanel::On_start_clicked, this,
 					[=](){
 		mode = Mode::Measure;
 		emit startMeasurement();
 	});
 
-	//ControlPanelのClearボタンが押されたとき
-	//時刻0～Tで計測した各グリッドのdepth平均値をクリアする
 	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
 					[=](){
 		grid_depth_averages_T.clear();
+	});
+
+	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
+					[=](int arg){
+		count_max = arg;
 	});
 
 	connect(controlPanel, &ControlPanel::On_DivN_changed, this,
@@ -171,7 +169,7 @@ void MainWindow::setup_signals_slots()
 					[=](){
 		bar = new QProgressBar(this);
 		ui->statusbar->addWidget(bar);
-		bar->setRange(0, count_n);
+		bar->setRange(0, count_max);
 	});
 
 	connect(this, &MainWindow::progressMeasurement, this,
@@ -185,7 +183,6 @@ void MainWindow::setup_signals_slots()
 		bar->deleteLater();
 	});
 
-
 	connect(this, &MainWindow::finishedCalculate, this,
 					[=](){
 		QLayoutItem *child;
@@ -197,7 +194,7 @@ void MainWindow::setup_signals_slots()
 			int x = i%div_n;
 			int y = i/div_n;
 			QLabel *lbl = new QLabel();
-			lbl->setText(QString::number(maximums[i]));
+			lbl->setText(QString::number(maximums[i],'f',3));
 			lbl->setAlignment(Qt::AlignHCenter);
 			lbl->setAlignment(Qt::AlignVCenter);
 			lbl->setFrameShape(QFrame::Shape::WinPanel);
@@ -211,42 +208,31 @@ void MainWindow::setup_signals_slots()
  */
 void MainWindow::main()
 {
-	//	qDebug() << "Do work ...";
 	QMetaObject::invokeMethod(timer, "stop");
 	emit updateTime();
 
-	int ret = 0;
-	CamParams_t camparams;
+	if(isCamParamChanged){
+		r200->setParams(camparams);
+		isCamParamChanged = false;
+	}
 
-	//カメラパラメータの取得
-	//	camparam->get(camparams);
-
-	//カメラパラメータのセット
-	//	r200->setParams(camparams);
-
-	//フレームデータの更新，新規フレームを取得
-	ret = r200->getFrames(*frames);
-	if(ret == -1){
+	if(r200->getFrames(*frames) == -1){
 		qCritical() << "Check Realsense Device Connection";
 		exit(255);
 	}
 
-	//格子描画処理
 	draw(*frames);
-
-	//処理, モード変数modeにしたがって処理内容を切替
-	//	qDebug() << "Mode:" << Mode::str[mode];
 
 	switch (mode) {
 		case Mode::Wait:
 			break;
 		case Mode::Measure:
-			measure(*frames);
+			measure(*frames); //call measure method
 			break;
 		case Mode::Save:
-			save(*frames);
+			save(*frames); //call save method
 			break;
-		case Mode::Calc:
+		case Mode::Calc: //call calc method
 			calc(*frames);
 			break;
 		default:
@@ -255,10 +241,8 @@ void MainWindow::main()
 
 	emit updateFrames(frames);
 
-	//ループ終了,タイマを再スタートしない感じで
-	if(!isThread){
-		return;
-	}
+	//if got close signal
+	if(!isThread)	return;
 
 	QMetaObject::invokeMethod(timer, "start");
 	return;
@@ -308,7 +292,7 @@ void MainWindow::measure(Frames_t &frames)
 	grid_depth_averages_T << grid_depth_averages_t;
 
 	//計測回数がNUM_MEASUREに達したら計測終了,Saveモードに移行する
-	if(grid_depth_averages_T.length() >= count_n){
+	if(grid_depth_averages_T.length() >= count_max){
 		mode = Mode::Save; //モード遷移
 		//		mode = Mode::Wait;
 		emit finishedMeasurement();
@@ -447,7 +431,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	//設定値書き込み
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("MAIN");
-	cfg.setValue("CountN", QVariant::fromValue(count_n));
+	cfg.setValue("CountN", QVariant::fromValue(count_max));
 	cfg.setValue("DivN", QVariant::fromValue(div_n));
 	cfg.setValue("HistMax", QVariant::fromValue<float>(h_max));
 	cfg.setValue("HistBin", QVariant::fromValue<float>(h_b));
@@ -462,32 +446,24 @@ void MainWindow::closeEvent(QCloseEvent *event)
  */
 void MainWindow::start()
 {
-	//メイン処理スレッドインスタンス作成
 	isThread = true;
 	th = new QThread();
 
-	//	vision->moveToThread(thMainProc);
-
-	//タイマー作成
 	timer = new QTimer();
-	timer->setInterval(THREAD_T);	//処理周期T[mse]の設定
-	timer->moveToThread(th);			//Timerを丸ごとスレッドに譲渡
+	timer->setInterval(THREAD_T);
+	timer->moveToThread(th);
 
-	//timerのtimeoutシグナルとスロット関数の接続
-	//Qt::DirectConnectionオプションによって,timerが所属するスレッド上でスロット関数が処理されるはず,,,
 	connect(timer, SIGNAL(timeout()),
 					this, SLOT(main()),
 					Qt::DirectConnection);
 
-	//スレッド起動,イベントループ開始
 	th->start();
 
-	QMetaObject::invokeMethod(timer, "start");	//タイマースタート
+	QMetaObject::invokeMethod(timer, "start");
 	qInfo() << "Start main thread";
-	//これで、周期T[msec]でスロット関数が実行される
 }
 
 void MainWindow::on_actOpenCamParamCont_triggered()
 {
-	camparam->show();
+	camParamControl->show();
 }

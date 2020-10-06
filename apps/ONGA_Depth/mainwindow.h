@@ -16,12 +16,11 @@
 #include <QLabel>
 #include <QProgressBar>
 
-#include "ui/CameraParams/cameraparameter.h"
-#include "ui/ControlPanel/controlpanel.h"
-#include "ui/Control/control.h"
-#include "ui/ProcessingProgress/processingprogress.h"
-#include "ui/ImageViewer/imageviewer.h"
-#include "R200/r200.h"
+#include "common.h"
+#include "../../src/ui/CameraParamControl/cameraparamcontrol.h"
+#include "../../src/ui/ControlPanel/controlpanel.h"
+#include "../../src/ui/ImageViewer/imageviewer.h"
+#include "../../src/R200/r200.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -63,10 +62,8 @@ signals:
 
 private:
 	Ui::MainWindow *ui;
-	Cameraparameter *camparam;
+	CameraParamControl *camParamControl;
 	ControlPanel *controlPanel;
-	//	Control *control;
-	//	ProcessingProgress *procProg;
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
@@ -82,13 +79,15 @@ private:
 	QString path;
 
 	//config用パラメータ
-	int count_n;	//計測最大数
+	int count_max;	//計測最大数
 	int div_n;		//平面分割数
 	float h_max;	//ヒストグラムの最大値[m]
 	float h_b;			//ヒストグラムのビン幅[m]
 
 	int mode;
 	QDateTime t;
+	CamParams_t camparams;
+	bool isCamParamChanged;
 	Frames_t *frames;
 	QList<QList<double>> grid_depth_averages_T; //時刻0～Tにおける平均depth値の集合
 	cv::Mat imgResAves;

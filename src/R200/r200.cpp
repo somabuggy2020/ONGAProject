@@ -21,12 +21,27 @@ int R200::init()
 	if(initStreams() == -1) return -1;
 
 	try{
+
+		//camera parmeter check
+		double min,max,step;
+		min = max = step = 0.0;
+
+		rsdev->get_option_range(rs::option::color_exposure, min, max, step);
+		qInfo() << QString("Color Exposure (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
+		rsdev->get_option_range(rs::option::color_gain, min, max, step);
+		qInfo() << QString("Color Gain (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
+		rsdev->get_option_range(rs::option::color_white_balance, min, max, step);
+		qInfo() << QString("Color WhiteBalance (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
+
+		rsdev->get_option_range(rs::option::r200_lr_exposure, min, max, step);
+		qInfo() << QString("IR Exposure (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
+		rsdev->get_option_range(rs::option::r200_lr_gain, min, max, step);
+		qInfo() << QString("IR Gain (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
+
 		if(!rsdev->is_streaming()) rsdev->start();
 
-		//ストリームがちゃんと動くまで待機
 		int i = 0;
 		while(!rsdev->is_streaming()){
-			qDebug() << i++;
 			QThread::sleep(33);
 		}
 		qInfo() << "Success device start";
@@ -70,6 +85,19 @@ int R200::getFrames(Frames_t &frames)
 
 int R200::setParams(CamParams_t &camparams)
 {
+	try {
+		rsdev->set_option(rs::option::color_exposure, camparams.exposure);
+		rsdev->set_option(rs::option::color_gain, camparams.gain);
+		rsdev->set_option(rs::option::color_white_balance, camparams.whitebalance);
+
+		rsdev->set_option(rs::option::r200_lr_exposure, camparams.lr_exposure);
+		rsdev->set_option(rs::option::r200_lr_gain, camparams.lr_gain);
+	}
+	catch (const rs::error &e) {
+		qWarning() << e.get_failed_args().c_str();
+		qWarning() << e.get_failed_function().c_str();
+		qWarning() << e.what();
+	}
 	return 0;
 }
 
@@ -154,12 +182,12 @@ int R200::initStreams()
 	try{
 		//RGB画像ストリーム起動
 		//		rsdev->enable_stream(rs::stream::color, rs::preset::best_quality);
-		rsdev->enable_stream(rs::stream::color, 640, 480, rs::format::bgr8, 60);
+		rsdev->enable_stream(rs::stream::color, 1920, 1080, rs::format::bgr8, 30);
 		//				rsDev->enable_stream(rs::stream::color,320,240,rs::format::rgb8,30);
 
 		//depthストリーム起動
 		rsdev->enable_stream(rs::stream::depth, rs::preset::best_quality);
-//		rsdev->enable_stream(rs::stream::depth, 480, 360, rs::format::z16, 30);
+		//		rsdev->enable_stream(rs::stream::depth, 480, 360, rs::format::z16, 30);
 
 		//画像サイズ保存
 		szRGB = cv::Size(rsdev->get_stream_width(rs::stream::rectified_color),

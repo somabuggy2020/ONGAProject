@@ -1,7 +1,6 @@
-#pragma once
+#ifndef DIFINITION_H
+#define DIFINITION_H
 
-#include <QString>
-#include <QMap>
 #include <opencv2/opencv.hpp>
 
 /*!
@@ -14,8 +13,8 @@ struct CamParams_t
 	double whitebalance;
 	double gain;
 	double exposure;
-	double lrgain;
-	double lrexposure;
+	double lr_gain;
+	double lr_exposure;
 };
 
 /*!
@@ -32,20 +31,5 @@ struct Frames_t
 	double scale;
 };
 
-/*!
- *
- */
-namespace Mode
-{
-	const int Wait = 0;
-	const int Measure = 1;
-	const int Save = 2;
-	const int Calc = 3;
 
-	const QMap<int,QString> str = {
-		{Wait, QString("Wait")},
-		{Measure, QString("Measure")},
-		{Save, QString("Save")},
-		{Calc, QString("Calc")}
-	};
-}
+#endif // DIFINITION_H
