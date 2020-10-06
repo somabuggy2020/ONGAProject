@@ -75,6 +75,7 @@ private:
 	bool isThread;
 
 	QString DepthDataPath;
+	QString DataPath;
 
 	R200 *r200;
 
