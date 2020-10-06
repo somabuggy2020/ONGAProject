@@ -1,0 +1,57 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(ONGAProject LANGUAGES CXX)
+
+set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+
+#librealsense
+include_directories(C:\\librealsense1.12.4\\include)
+link_directories(C:\\librealsense1.12.4\\lib\\x64)
+
+#OpenCV
+set(OpenCV_DIR $ENV{OpenCV_ROOT})
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+#PCL
+#find_package(PCL 1.8.1 REQUIRED EXACT)
+#include_directories(${PCL_INCLUDE_DIRS})
+
+#for resource files
+file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
+file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+
+add_executable(ONGA_Depth
+	apps/ONGA_Depth/main.cpp
+	apps/ONGA_Depth/mainwindow.cpp
+	apps/ONGA_Depth/mainwindow.h
+	apps/ONGA_Depth/mainwindow.ui
+	apps/ONGA_Depth/common.h
+	src/R200/r200.cpp
+	src/R200/r200.h
+	src/R200/difinition.h
+	src/ui/CameraParamControl/cameraparamcontrol.cpp
+	src/ui/CameraParamControl/cameraparamcontrol.h
+	src/ui/CameraParamControl/cameraparamcontrol.ui
+	src/ui/ImageViewer/imageviewer.cpp
+	src/ui/ImageViewer/imageviewer.h
+	src/ui/ImageViewer/imageviewer.ui
+	src/ui/ControlPanel/controlpanel.cpp
+	src/ui/ControlPanel/controlpanel.h
+	src/ui/ControlPanel/controlpanel.ui
+	)
+
+target_link_libraries(ONGA_Depth PRIVATE
+	Qt5::Widgets
+	${OpenCV_LIBRARIES}
+	realsense)
