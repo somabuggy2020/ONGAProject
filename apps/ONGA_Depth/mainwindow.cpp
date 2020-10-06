@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 	QDir dir;
 	dir.mkdir("Log");
 	dir.mkdir("Log/DepthData");
+	DataPath = QString("./Log");
 	DepthDataPath = QString("./Log/DepthData/");
 
 	//Load config
@@ -229,11 +230,11 @@ void MainWindow::main()
 		case Mode::Measure:
 			measure(*frames); //call measure method
 			break;
-		case Mode::Save:
-			save(*frames); //call save method
-			break;
 		case Mode::Calc: //call calc method
 			calc(*frames);
+			break;
+		case Mode::Save:
+			save(*frames); //call save method
 			break;
 		default:
 			break;
@@ -279,10 +280,6 @@ void MainWindow::measure(Frames_t &frames)
 			cv::threshold(out, mask, 0.01, 1, cv::THRESH_BINARY);
 			mask.convertTo(mask, CV_8UC1);
 
-			//depth値の平均値を出す
-			//cv::Scalar(4次元配列)で受け取るけど，実質チャンネルは1なので値は一つしかないはず
-			//depth値の取れていないピクセルに関しては計算に含めないようにしないと平均値の誤差につながる
-			//なのでmaskをかけてある maskにおける値が1のところだけ計算している
 			cv::Scalar _ave = cv::mean(out, mask);
 			double ave = _ave.val[0];			//多分1チャンネル目の平均値
 			grid_depth_averages_t << ave;	//配列に格納
@@ -291,10 +288,8 @@ void MainWindow::measure(Frames_t &frames)
 
 	grid_depth_averages_T << grid_depth_averages_t;
 
-	//計測回数がNUM_MEASUREに達したら計測終了,Saveモードに移行する
 	if(grid_depth_averages_T.length() >= count_max){
-		mode = Mode::Save; //モード遷移
-		//		mode = Mode::Wait;
+		mode = Mode::Calc;
 		emit finishedMeasurement();
 	}
 
@@ -303,55 +298,7 @@ void MainWindow::measure(Frames_t &frames)
 }
 
 /*!
- * \brief MainWindow::save
- */
-void MainWindow::save(Frames_t &frames)
-{
-	QDateTime currentTime = QDateTime::currentDateTime();
-
-	QString fname = currentTime.toString("yyyy-MM-dd-hh-mm-ss");
-	fname += QString(".csv");
-
-	QFile f;
-	f.setFileName(DepthDataPath + "/" + fname);
-
-	if(!f.open(QFile::WriteOnly | QFile::Text)){
-		qCritical() << f.errorString();
-		mode = Mode::Wait;
-		return;
-	}
-
-	QString header;
-	header += QString(",");
-	for(int i = 0; i < div_n*div_n; i++){
-		header += QString("%1,").arg(i);
-	}
-	header += QString("\n");
-	f.write(header.toStdString().c_str());
-
-
-	for(int i = 0; i < grid_depth_averages_T.count(); i++){
-		QString line;
-		line += QString("%1,").arg(i);
-
-		QList<double> depth_t = grid_depth_averages_T[i];
-		Q_FOREACH(double depth, depth_t){
-			line += QString("%1,").arg(depth);
-		}
-		line += QString("\n");
-
-		f.write(line.toStdString().c_str());
-	}
-
-	//file close
-	f.close();
-	mode = Mode::Calc;
-	return;
-}
-
-/*!
  * \brief MainWindow::calc
- * 各グリッドごとのdepth値のヒストグラムを作成する0
  */
 void MainWindow::calc(Frames_t &frames)
 {
@@ -389,10 +336,81 @@ void MainWindow::calc(Frames_t &frames)
 
 	emit finishedCalculate();
 
-	mode = Mode::Wait;
+	mode = Mode::Save;
 	return;
 }
 
+/*!
+ * \brief MainWindow::save
+ */
+void MainWindow::save(Frames_t &frames)
+{
+	QDateTime currentTime = QDateTime::currentDateTime();
+
+	QString fname = currentTime.toString("yyyy-MM-dd-hh-mm-ss");
+	fname += QString(".csv");
+
+	//--------------------------------------------------
+	//--------------------------------------------------
+	//--------------------------------------------------
+	QFile f;
+	f.setFileName(DepthDataPath + "/" + fname);
+
+	if(!f.open(QFile::WriteOnly | QFile::Text)){
+		qCritical() << f.errorString();
+		mode = Mode::Wait;
+		return;
+	}
+
+	QString header;
+	header += QString(",");
+	for(int i = 0; i < div_n*div_n; i++){
+		header += QString("%1,").arg(i);
+	}
+	header += QString("\n");
+	f.write(header.toStdString().c_str());
+
+	for(int i = 0; i < grid_depth_averages_T.count(); i++){
+		QString line;
+		line += QString("%1,").arg(i);
+
+		QList<double> depth_t = grid_depth_averages_T[i];
+		Q_FOREACH(double depth, depth_t){
+			line += QString("%1,").arg(depth);
+		}
+		line += QString("\n");
+
+		f.write(line.toStdString().c_str());
+	}
+
+	f.close();
+
+
+	//--------------------------------------------------
+	//--------------------------------------------------
+	//--------------------------------------------------
+	f.setFileName(DataPath + "/" + fname);
+	if(!f.open(QFile::WriteOnly | QFile::Text)){
+		qCritical() << f.errorString();
+		mode = Mode::Wait;
+		return;
+	}
+
+	header = QString("");
+	header += QString("DivN,%1\n").arg(div_n);
+	header += QString("CountMax,%1\n").arg(count_max);
+	f.write(header.toStdString().c_str());
+
+	for(int i = 0; i < maximums.count(); i++){
+		QString line;
+		line += QString("%1,%2\n").arg(i).arg(maximums[i]);
+		f.write(line.toStdString().c_str());
+	}
+	f.close();
+
+	mode = Mode::Wait;
+	return;
+}
 
 /*!
  * \brief MainWindow::draw
