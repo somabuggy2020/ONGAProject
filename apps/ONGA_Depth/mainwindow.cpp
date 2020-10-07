@@ -94,7 +94,7 @@ void MainWindow::setup()
 
 	imgvwrHistgrams = new ImageViewer("Histgrams", this);
 	imgvwrHistgrams->initialize(CV_8UC3, QImage::Format_BGR888);
-	imgvwrHistgrams->setWindowFlag(Qt::WindowType::Window);
+	imgvwrHistgrams->setWindowFlag(Qt::Window);
 	imgvwrHistgrams->hide();
 
 	//Time show label UI (add to statusbar)
@@ -130,9 +130,9 @@ void MainWindow::setup_signals_slots()
 					[=](){
 		counter = 0;
 		imgvwrHistgrams->hide();
-		I_div_T.clear();
 
 		//allocate divided depth memory
+		I_div_T.clear();
 		for(int i = 0; i < (div_n*div_n); i++){
 			QList<cv::Mat> tmp;
 			for(int t = 0; t < count_max; t++){
@@ -142,6 +142,8 @@ void MainWindow::setup_signals_slots()
 			I_div_T.append(tmp);
 		}
 
+		imgTotalHistgram = cv::Mat();
+
 		emit startMeasurement();
 		mode = Mode::Measure;
 	});
@@ -149,7 +151,6 @@ void MainWindow::setup_signals_slots()
 	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
 					[=](){
 		counter = 0;
-		//		grid_depth_averages_T.clear();
 	});
 
 	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
@@ -230,11 +231,11 @@ void MainWindow::setup_signals_slots()
 			delete child->widget();
 			delete child;
 		}
-		for(int i = 0; i < maximums.count(); i++){
+		for(int i = 0; i < class_values.count(); i++){
 			int x = i%div_n;
 			int y = i/div_n;
 			QLabel *lbl = new QLabel();
-			lbl->setText(QString::number(maximums[i],'f',3));
+			lbl->setText(QString::number(class_values[i],'f',3));
 			lbl->setAlignment(Qt::AlignHCenter);
 			lbl->setAlignment(Qt::AlignVCenter);
 			lbl->setFrameShape(QFrame::Shape::WinPanel);
@@ -417,7 +418,7 @@ void MainWindow::calc(Frames_t &frames)
 
 
 	//Make histgrams
-	QList<cv::Mat> _set_histgrams;
+	QList<cv::Mat> _set_histograms;
 
 	float range[] = {0.0, h_max};
 	const float *hrange = {range};
@@ -428,34 +429,45 @@ void MainWindow::calc(Frames_t &frames)
 		cv::calcHist(&set_mean_T[i], 1, 0, cv::Mat(),
 								 hist, 1, &histSize, &hrange, true, false);
 
-		_set_histgrams.append(hist);
+		_set_histograms.append(hist);
 	}
 
 
-	//find maximum degree position in histgram matrix
-	maximums.clear();
-	for(int i = 0; i < _set_histgrams.count(); i++){
+	/***
+	 * Compute the class values
+	 * that will be set the maximum frequency value in 0~T frames
+	 ***/
+	class_values.clear();
+	for(int i = 0; i < _set_histograms.count(); i++){
 		double min, max;
 		cv::Point minLoc, maxLoc;
 		min = max = -1;
+
 		//search value of maximum degree position
-		cv::minMaxLoc(_set_histgrams[i], &min, &max, &minLoc, &maxLoc);
-		maximums << maxLoc.y*(h_b); //get value [m]
+		cv::minMaxLoc(_set_histograms[i], &min, &max, &minLoc, &maxLoc);
+
+		//get value[m]
+		class_values << maxLoc.y*(h_b);
 	}
+
+	//"class_values" will show in GUI
+
+
 
 	//Make histgram images for debug
 	imgHistgrams.clear();
 	int hist_w = cvRound(h_max/h_b)*3;
 	int hist_h = cvRound(h_max/h_b)*3;
+	//	int hist_h = count_max;
 	int bin_w = cvRound((double)hist_w/(h_max/h_b));
 
 	cv::Size sz(hist_w, hist_h); //image size
 
-	for(int i = 0; i < _set_histgrams.count(); i++){
+	for(int i = 0; i < _set_histograms.count(); i++){
 		imgHistgrams.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
 
-		cv::normalize(_set_histgrams[i],
-									_set_histgrams[i],
+		cv::normalize(_set_histograms[i],
+									_set_histograms[i],
 									0,
 									sz.height,
 									cv::NORM_MINMAX,
@@ -465,27 +477,29 @@ void MainWindow::calc(Frames_t &frames)
 		for(int j = 0; j < (int)(h_max/h_b); j++){
 			cv::line(imgHistgrams.back(),
 							 cv::Point(bin_w*j, hist_h-1),
-							 cv::Point(bin_w*j, hist_h - cvRound(_set_histgrams[i].at<float>(j))),
+							 cv::Point(bin_w*j, hist_h - cvRound(_set_histograms[i].at<float>(j))),
 							 cv::Scalar::all(255),
 							 2, 8, 0);
 		}
 	}
 
-	cv::Mat vline(hist_h,3,CV_8UC3,cv::Scalar(0,0,255));
 
+	cv::Mat vline(hist_h, 5, CV_8UC3, cv::Scalar(0,0,255));
 	for(int y = 0; y < div_n; y++){
-		cv::Mat matHorizontal(hist_h,3,CV_8UC3,cv::Scalar(0,0,255));
+		cv::Mat matH = vline.clone();
+
+		//concat horizontal direction
 		for(int x = 0; x < div_n; x++){
 			int idx = x + y*div_n;
-			cv::hconcat(matHorizontal, imgHistgrams[idx], matHorizontal);
-			cv::hconcat(matHorizontal, vline, matHorizontal);
+			cv::hconcat(matH, imgHistgrams[idx], matH);
+			cv::hconcat(matH, vline, matH);
 		}
 
-		if(imgTotalHistgram.empty()) imgTotalHistgram = matHorizontal.clone();
-		else cv::vconcat(imgTotalHistgram, matHorizontal, imgTotalHistgram);
+		if(imgTotalHistgram.empty()) imgTotalHistgram = matH.clone();
+		else cv::vconcat(imgTotalHistgram, matH, imgTotalHistgram);
 
 		cv::vconcat(imgTotalHistgram,
-								cv::Mat(3, matHorizontal.cols, CV_8UC3, cv::Scalar(0,0,255)),
+								cv::Mat(5, matH.cols, CV_8UC3, cv::Scalar(0,0,255)),
 								imgTotalHistgram);
 	}
 
@@ -556,9 +570,9 @@ void MainWindow::save(Frames_t &frames)
 	header += QString("CountMax,%1\n").arg(count_max);
 	f.write(header.toStdString().c_str());
 
-	for(int i = 0; i < maximums.count(); i++){
+	for(int i = 0; i < class_values.count(); i++){
 		QString line;
-		line += QString("%1,%2\n").arg(i).arg(maximums[i]);
+		line += QString("%1,%2\n").arg(i).arg(class_values[i]);
 		f.write(line.toStdString().c_str());
 	}
 	f.close();

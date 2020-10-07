@@ -89,6 +89,7 @@ private:
 
 	float h_max;
 	float h_b;
+	QList<double> class_values;
 
 	int mode;			//{Mode:Wait, Mode::Measure,,,}
 	QDateTime t;	//timestamp
@@ -100,7 +101,6 @@ private:
 
 	//	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
-	QList<double> maximums;
 	QList<cv::Mat> imgHistgrams;
 	cv::Mat imgTotalHistgram;
 };
