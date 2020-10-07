@@ -67,7 +67,6 @@ private:
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
-	ImageViewer *imgvwrHistgrams;
 	QLabel *lblStatus;
 	QProgressBar *bar;
 
@@ -80,29 +79,20 @@ private:
 
 	R200 *r200;
 
-	//Measurement parameter
-	int counter;
 	int count_max;
 	int div_n;
-	QList<QList<cv::Mat>> I_div_T;
-	QList<cv::Mat> set_mean_T;
-
 	float h_max;
 	float h_b;
-	QList<double> class_values;
 
-	int mode;			//{Mode:Wait, Mode::Measure,,,}
-	QDateTime t;	//timestamp
+	int mode;
+	QDateTime t;
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
-
-
-
-	//	QList<QList<double>> grid_depth_averages_T;
+	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
-	QList<cv::Mat> imgHistgrams;
-	cv::Mat imgTotalHistgram;
+	QList<cv::Mat> matHistgram;
+	QList<double> maximums;
 };
 
 Q_DECLARE_METATYPE(cv::Mat)

@@ -52,6 +52,8 @@ int R200::init()
 		qCritical() << e.what();
 		return -1;
 	}
+
+	return 0;
 }
 
 int R200::getFrames(Frames_t &frames)
