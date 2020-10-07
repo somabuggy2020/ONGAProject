@@ -23,10 +23,8 @@ private slots:
 	void on_btnClear_clicked();
 	void on_spnCountMax_valueChanged(int arg1);
 	void on_spnDivN_valueChanged(int arg1);
-
 	void on_spnHistMax_valueChanged(double arg1);
-
-	void on_doubleSpinBox_valueChanged(double arg1);
+	void on_spnHistBin_valueChanged(double arg1);
 
 signals:
 	void On_start_clicked();

@@ -62,7 +62,7 @@ void MainWindow::setup()
 	 ***/
 
 	//CameraParmeter UI
-	camParamControl = new CameraParamControl(this);
+	camParamControl = new CameraParameterControlPanel(this);
 	camParamControl->setWindowFlag(Qt::Window);
 	camParamControl->hide();
 
@@ -98,7 +98,7 @@ void MainWindow::setup_signals_slots()
 	 * signals-slots
 	 ***/
 
-	connect(camParamControl, &CameraParamControl::On_CameraParams_changed, this,
+	connect(camParamControl, &CameraParameterControlPanel::On_CameraParams_changed, this,
 					[=](CamParams_t &camparams){
 		this->camparams = camparams;
 		isCamParamChanged = true;

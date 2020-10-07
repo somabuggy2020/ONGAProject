@@ -1,7 +1,7 @@
 #include "cameraparamcontrol.h"
 #include "ui_cameraparamcontrol.h"
 
-CameraParamControl::CameraParamControl(QWidget *parent) :
+CameraParameterControlPanel::CameraParameterControlPanel(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::CameraParamControl)
 {
@@ -30,7 +30,7 @@ CameraParamControl::CameraParamControl(QWidget *parent) :
 	ui->sldrIrGain->setValue(camparams.lr_gain);
 }
 
-CameraParamControl::~CameraParamControl()
+CameraParameterControlPanel::~CameraParameterControlPanel()
 {
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("VISION");
@@ -45,7 +45,7 @@ CameraParamControl::~CameraParamControl()
 	delete ui;
 }
 
-void CameraParamControl::init(CamParams_t camparam)
+void CameraParameterControlPanel::init(CamParams_t camparam)
 {
 	ui->sldrSaturation->setValue((int)camparam.saturation);
 	ui->sldrWhitebalance->setValue((int)camparam.whitebalance);
@@ -70,31 +70,31 @@ void CameraParamControl::init(CamParams_t camparam)
 	this->camparams.exposure = camparam.exposure;
 }
 
-void CameraParamControl::on_sldrExposure_valueChanged(int value)
+void CameraParameterControlPanel::on_sldrExposure_valueChanged(int value)
 {
 	camparams.exposure = value;
 	emit On_CameraParams_changed(camparams);
 }
 
-void CameraParamControl::on_sldrGain_valueChanged(int value)
+void CameraParameterControlPanel::on_sldrGain_valueChanged(int value)
 {
 	camparams.gain = value;
 	emit On_CameraParams_changed(camparams);
 }
 
-void CameraParamControl::on_sldrWhitebalance_valueChanged(int value)
+void CameraParameterControlPanel::on_sldrWhitebalance_valueChanged(int value)
 {
 	camparams.whitebalance = value;
 	emit On_CameraParams_changed(camparams);
 }
 
-void CameraParamControl::on_sldrIrExposure_valueChanged(int value)
+void CameraParameterControlPanel::on_sldrIrExposure_valueChanged(int value)
 {
 	camparams.lr_exposure = value;
 	emit On_CameraParams_changed(camparams);
 }
 
-void CameraParamControl::on_sldrIrGain_valueChanged(int value)
+void CameraParameterControlPanel::on_sldrIrGain_valueChanged(int value)
 {
 	camparams.lr_gain = value;
 	emit On_CameraParams_changed(camparams);

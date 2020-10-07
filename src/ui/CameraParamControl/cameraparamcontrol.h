@@ -14,13 +14,13 @@ namespace Ui {
 }
 QT_END_NAMESPACE
 
-class CameraParamControl : public QWidget
+class CameraParameterControlPanel : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit CameraParamControl(QWidget *parent = 0);
-	~CameraParamControl();
+	explicit CameraParameterControlPanel(QWidget *parent = 0);
+	~CameraParameterControlPanel();
 
 	void init(CamParams_t);
 

@@ -62,11 +62,12 @@ signals:
 
 private:
 	Ui::MainWindow *ui;
-	CameraParamControl *camParamControl;
+	CameraParameterControlPanel *camParamControl;
 	ControlPanel *controlPanel;
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
+	ImageViewer *imgvwrHistgrams;
 	QLabel *lblStatus;
 	QProgressBar *bar;
 
@@ -79,20 +80,25 @@ private:
 
 	R200 *r200;
 
+	//Measurement parameter
 	int count_max;
 	int div_n;
 	float h_max;
 	float h_b;
 
-	int mode;
-	QDateTime t;
+	int mode;			//{Mode:Wait, Mode::Measure,,,}
+	QDateTime t;	//timestamp
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
+
 	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
-	QList<cv::Mat> matHistgram;
+
+	QList<cv::Mat> matHistgrams;
 	QList<double> maximums;
+	QList<cv::Mat> imgHistgrams;
+	cv::Mat imgTotalHistgram;
 };
 
 Q_DECLARE_METATYPE(cv::Mat)

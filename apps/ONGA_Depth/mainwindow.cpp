@@ -17,25 +17,32 @@ MainWindow::MainWindow(QWidget *parent)
 	DepthDataPath = QString("./Log/DepthData/");
 
 	//Load config
-	//"MAIN" group values
 	QSettings cfg("config.ini", QSettings::IniFormat);
+
+	//Refers to the values of the "MAIN" group
 	cfg.beginGroup("MAIN");
-	count_max = cfg.value("CountN", 100).toInt();
-	div_n = cfg.value("DivN", 7).toInt();
-	h_max = cfg.value("HistMax").toFloat();
-	h_b = cfg.value("HistBin").toFloat();
+	count_max = cfg.value("CountN", 100).toInt(); //Number of maximum total frame
+	div_n = cfg.value("DivN", 7).toInt();					//Number of image divisions
+	h_max = cfg.value("HistMax", 6.0).toFloat();	//Max value of histgram range [m]
+	h_b = cfg.value("HistBin", 0.1).toFloat();		//Bin size of histgram [m]
 	cfg.endGroup();
 
 	qRegisterMetaType<cv::Mat>();
 	qRegisterMetaType<Frames_t>();
 
-	setup();
-	setup_signals_slots();
+	setup(); //UI setup
+	setup_signals_slots(); //Signal and Slot connections
 
+
+	//
+	// Try to open R200
+	//
 	r200 = new R200();
+
 	if(r200->init() == -1){
 		qWarning() << "Check Realsense Device Connection";
 	}
+
 
 	mode = Mode::Wait;
 	t = QDateTime::currentDateTime();
@@ -43,8 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
 	isCamParamChanged = false;
 	frames = new Frames_t();
 	imgResAves = cv::Mat();
-	start();
 
+
+	//Try to start the process
+	start();
 }
 
 MainWindow::~MainWindow()
@@ -62,15 +71,15 @@ void MainWindow::setup()
 	 ***/
 
 	//CameraParmeter UI
-	camParamControl = new CameraParamControl(this);
+	camParamControl = new CameraParameterControlPanel(this);
 	camParamControl->setWindowFlag(Qt::Window);
 	camParamControl->hide();
 
-	//Control Panel UI
+	//Control Panel UI (add to right dock widget area)
 	controlPanel = new ControlPanel(this);
 	ui->dwControlPanel->setWidget(controlPanel);
 
-	//Image UI
+	//Image UIs (add to left dock widget area)
 	imgvwrRGB = new ImageViewer("RGB", this);
 	imgvwrRGB->initialize(CV_8UC3, QImage::Format::Format_BGR888);
 	ui->dwImgRGB->setWidget(imgvwrRGB);
@@ -83,10 +92,16 @@ void MainWindow::setup()
 	imgvwrAlignedDepth->initialize(CV_16UC1, QImage::Format::Format_Grayscale8);
 	ui->dwImgDepth->setWidget(imgvwrAlignedDepth);
 
+	imgvwrHistgrams = new ImageViewer("Histgrams", this);
+	imgvwrHistgrams->initialize(CV_8UC3, QImage::Format_BGR888);
+	imgvwrHistgrams->setWindowFlag(Qt::WindowType::Window);
+	imgvwrHistgrams->hide();
+
 	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
 	lblStatus->setText("start ...");
 	ui->statusbar->addWidget(lblStatus);
+
 }
 
 /*!
@@ -98,15 +113,23 @@ void MainWindow::setup_signals_slots()
 	 * signals-slots
 	 ***/
 
-	connect(camParamControl, &CameraParamControl::On_CameraParams_changed, this,
+	/***
+	 * call from CameraParamControl UI class
+	 ***/
+	connect(camParamControl, &CameraParameterControlPanel::On_CameraParams_changed, this,
 					[=](CamParams_t &camparams){
 		this->camparams = camparams;
 		isCamParamChanged = true;
 	});
 
+
+	/***
+	 * call from ControlPanel UI class
+	 ***/
 	connect(controlPanel, &ControlPanel::On_start_clicked, this,
 					[=](){
 		mode = Mode::Measure;
+		imgvwrHistgrams->hide();
 		emit startMeasurement();
 	});
 
@@ -127,19 +150,20 @@ void MainWindow::setup_signals_slots()
 
 	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
 					[=](double arg){
-		h_max = arg;
-	});
-
-	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
-					[=](double arg){
-		h_max = arg;
+		h_max = arg; //change max value of histgram range
 	});
 
 	connect(controlPanel, &ControlPanel::On_HistBin_changed, this,
 					[=](double arg){
-		h_b = arg;
+		h_b = arg; //change bin size of histgram
 	});
 
+
+
+
+	/***
+	 * call from local signals
+	 ***/
 	connect(this, &MainWindow::updateTime, this,
 					[=](){
 		QDateTime ct = QDateTime::currentDateTime();
@@ -186,6 +210,7 @@ void MainWindow::setup_signals_slots()
 
 	connect(this, &MainWindow::finishedCalculate, this,
 					[=](){
+
 		QLayoutItem *child;
 		while((child = ui->gl->takeAt(0)) != nullptr){
 			delete child->widget();
@@ -201,7 +226,17 @@ void MainWindow::setup_signals_slots()
 			lbl->setFrameShape(QFrame::Shape::WinPanel);
 			ui->gl->addWidget(lbl, y, x);
 		}
+
+
+		imgvwrHistgrams->setImage(imgTotalHistgram);
+		imgvwrHistgrams->show();
 	});
+
+
+
+
+
+
 }
 
 /*!
@@ -245,6 +280,7 @@ void MainWindow::main()
 	//if got close signal
 	if(!isThread)	return;
 
+	//restart timer
 	QMetaObject::invokeMethod(timer, "start");
 	return;
 }
@@ -255,44 +291,54 @@ void MainWindow::main()
  */
 void MainWindow::measure(Frames_t &frames)
 {
-	//Depth画像を複製
-	cv::Mat imgDepth = frames.imgDepth.clone();
-
-	//Depth画像格子分割しながら，各格子における平均depth値を格納
-	//格納先はローカルメンバ変数
+	cv::Mat _Depth = frames.imgDepth.clone();
 	QList<double> grid_depth_averages_t;
 
 	for(int j = 0; j < div_n; j++){
 		for(int i = 0; i < div_n; i++){
-			//切り出し範囲計算
-			cv::Rect rect = cv::Rect(imgDepth.cols/div_n*i,
-															 imgDepth.rows/div_n*j,
-															 imgDepth.cols/div_n,
-															 imgDepth.rows/div_n);
+			//set clipping area as rectangle
+			cv::Rect rect = cv::Rect(_Depth.cols/div_n*i, //origin x
+															 _Depth.rows/div_n*j, //origin y
+															 _Depth.cols/div_n,   //width
+															 _Depth.rows/div_n);  //height
 
-			//切り出し処理
-			cv::Mat _out(imgDepth, rect); //また16UC1
+			//carry-out clipping
+			cv::Mat _out(_Depth, rect);
+			//calculate 16bit depth value to 32bit float meter value
 			cv::Mat out;
-			_out.convertTo(out, CV_32FC1, frames.scale); //16bit value to 32bit-float[m]
+			_out.convertTo(out, CV_32FC1, frames.scale);
 
-			//マスク作成
+
+			//make mask for error value
+			cv::Mat mask_low, mask_high;
 			cv::Mat mask;
-			cv::threshold(out, mask, 0.01, 1, cv::THRESH_BINARY);
+			cv::threshold(out, mask_low, 0.05, 255, cv::THRESH_BINARY);
+			cv::threshold(out, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
+
+			cv::bitwise_and(mask_low, mask_high, mask);
 			mask.convertTo(mask, CV_8UC1);
 
+			//calculate mean value in clipped depth values
 			cv::Scalar _ave = cv::mean(out, mask);
-			double ave = _ave.val[0];			//多分1チャンネル目の平均値
-			grid_depth_averages_t << ave;	//配列に格納
+			double ave = _ave.val[0];
+			grid_depth_averages_t << ave; //append to array
 		}
 	}
 
 	grid_depth_averages_T << grid_depth_averages_t;
 
+
+
+	//if the number of current total measured frame reached "count_max"
+	//mode will be Mode::Calc
 	if(grid_depth_averages_T.length() >= count_max){
 		mode = Mode::Calc;
 		emit finishedMeasurement();
 	}
 
+	//else
+	//continue the measure mode
+	//and update progressbar
 	emit progressMeasurement(grid_depth_averages_T.count());
 	return;
 }
@@ -302,37 +348,90 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::calc(Frames_t &frames)
 {
-	matHistgram.clear();
+	matHistgrams.clear();
 
 	for(int i = 0; i < div_n*div_n; i++){
+
 		float *averages = new float[grid_depth_averages_T.length()];
-		for(int t = 0; t < grid_depth_averages_T.length(); t++){ //時刻tのi番目のグリッド
+
+		for(int t = 0; t < grid_depth_averages_T.length(); t++){
 			float val = (float)grid_depth_averages_T[t][i];
 			averages[t] = val;
 		}
 
 		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
 
+		//histgram settings
 		cv::Mat hist;
 		float range[] = {0.0, h_max};
 		const float *hrange = {range};
-		int histSize = (int)(range[1]/h_b);
+		int histSize = (int)(h_max/h_b);
 
 		//calculate histgram by OpenCV
 		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
 
-		matHistgram << hist;
+		matHistgrams << hist;
 	}
 
 	maximums.clear();
-	for(int i = 0; i < matHistgram.count(); i++){
+	for(int i = 0; i < matHistgrams.count(); i++){
 		double min, max;
 		cv::Point minLoc, maxLoc;
-		min=max=-1;
+		min = max = -1;
 		//search value of maximum degree position
-		cv::minMaxLoc(matHistgram[i], &min, &max, &minLoc, &maxLoc);
-		maximums << maxLoc.y*(h_b)/2.0; //get value [m]
+		cv::minMaxLoc(matHistgrams[i], &min, &max, &minLoc, &maxLoc);
+		maximums << maxLoc.y*(h_b); //get value [m]
 	}
+
+
+	//Make histgram images for debug
+	imgHistgrams.clear();
+	int hist_w = cvRound(h_max/h_b)*3;
+	int hist_h = cvRound(h_max/h_b)*3;
+	int bin_w = cvRound((double)hist_w/(h_max/h_b));
+
+	cv::Size sz(hist_w, hist_h); //image size
+
+	for(int i = 0; i < matHistgrams.count(); i++){
+		imgHistgrams.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
+
+		cv::normalize(matHistgrams[i],
+									matHistgrams[i],
+									0,
+									sz.height,
+									cv::NORM_MINMAX,
+									-1,
+									cv::Mat());
+
+		for(int j = 0; j < (int)(h_max/h_b); j++){
+			cv::line(imgHistgrams.back(),
+							 cv::Point(bin_w*j, hist_h-1),
+							 cv::Point(bin_w*j, hist_h - cvRound(matHistgrams[i].at<float>(j))),
+							 cv::Scalar::all(255),
+							 2, 8, 0);
+		}
+	}
+
+	cv::Mat vline(hist_h,3,CV_8UC3,cv::Scalar(0,0,255));
+
+	for(int y = 0; y < div_n; y++){
+		cv::Mat matHorizontal(hist_h,3,CV_8UC3,cv::Scalar(0,0,255));
+		for(int x = 0; x < div_n; x++){
+			int idx = x + y*div_n;
+			cv::hconcat(matHorizontal, imgHistgrams[idx], matHorizontal);
+			cv::hconcat(matHorizontal, vline, matHorizontal);
+		}
+
+		if(imgTotalHistgram.empty()) imgTotalHistgram = matHorizontal.clone();
+		else cv::vconcat(imgTotalHistgram, matHorizontal, imgTotalHistgram);
+
+		cv::vconcat(imgTotalHistgram,
+								cv::Mat(3, matHorizontal.cols, CV_8UC3, cv::Scalar(0,0,255)),
+								imgTotalHistgram);
+	}
+
+//	cv::imshow("test", imgTotalHistgram);
+//	cv::waitKey(1);
 
 	emit finishedCalculate();
 
@@ -418,21 +517,44 @@ void MainWindow::save(Frames_t &frames)
  */
 void MainWindow::draw(Frames_t &frames)
 {
-	//格子の描画
+	//draw grid on aligned RGB image
 	for(int i = 0; i <= div_n; i++){
-		//緯線
 		cv::line(frames.imgAlignedRGB,
 						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
 						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
 						 cv::Scalar(0,0,255), //Red
 						 2);
-		//		//罫線
 		cv::line(frames.imgAlignedRGB,
 						 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
 						 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
 						 cv::Scalar(0,0,255), //Red
 						 2);
 	}
+
+
+	//Make image of Histgram
+	//	if(matHistgrams.empty()) return;
+
+	//	cv::Size sz; //Histgram image size
+	//	sz.width = 512;
+	//	sz.height = 400;
+	//	int bin_w = cvRound((double)sz.width/(h_max/h_b));
+	//	cv::Mat img(sz, CV_8UC3, cv::Scalar::all(0));
+
+	//	cv::normalize(matHistgrams[0], matHistgrams[0], 0, img.rows, cv::NORM_MINMAX, -1, cv::Mat());
+
+	//	for(int i = 1; i < (int)(h_max/h_b); i++){
+	//		line(img,
+	//				 cv::Point(bin_w*(i-1), sz.height - cvRound(matHistgrams[0].at<float>(i-1))),
+	//				cv::Point(bin_w*(i), sz.height - cvRound(matHistgrams[0].at<float>(i))),
+	//				cv::Scalar(255, 0, 0),
+	//				2, 8, 0
+	//				);
+	//	}
+
+	//	cv::imshow("hist", img);
+	//	cv::waitKey(-1);
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -441,7 +563,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	th->exit();
 	r200->close();
 
-	//設定値書き込み
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("MAIN");
 	cfg.setValue("CountN", QVariant::fromValue(count_max));

@@ -62,7 +62,7 @@ signals:
 
 private:
 	Ui::MainWindow *ui;
-	CameraParamControl *camParamControl;
+	CameraParameterControlPanel *camParamControl;
 	ControlPanel *controlPanel;
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
