@@ -85,6 +85,7 @@ private:
 	int count_max;
 	int div_n;
 	QList<QList<cv::Mat>> I_div_T;
+	QList<cv::Mat> set_mean_T;
 
 	float h_max;
 	float h_b;
@@ -97,7 +98,7 @@ private:
 
 
 
-	QList<QList<double>> grid_depth_averages_T;
+	//	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
 
 	QList<cv::Mat> matHistgrams;

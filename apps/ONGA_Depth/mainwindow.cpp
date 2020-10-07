@@ -148,7 +148,8 @@ void MainWindow::setup_signals_slots()
 
 	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
 					[=](){
-		grid_depth_averages_T.clear();
+		counter = 0;
+		//		grid_depth_averages_T.clear();
 	});
 
 	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
@@ -327,15 +328,12 @@ void MainWindow::measure(Frames_t &frames)
 		cv::Mat I_div_i_t_32f;
 		I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
 
-		//make mask
-		cv::Mat mask_low, mask_high, mask;
-		cv::threshold(I_div_i_t_32f, mask_low, 0.05, 255, cv::THRESH_BINARY);
-		cv::threshold(I_div_i_t_32f, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
-		cv::bitwise_and(mask_low, mask_high, mask);
-		mask.convertTo(mask, CV_8UC1);
-
 		I_div_T[i][counter] = I_div_i_t_32f.clone();
 	}
+
+
+
+
 
 	for(int j = 0; j < div_n; j++){
 		for(int i = 0; i < div_n; i++){
@@ -351,16 +349,6 @@ void MainWindow::measure(Frames_t &frames)
 			//calculate 16bit depth value to 32bit float meter value
 			cv::Mat I_div_i_t_32f;
 			I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
-
-			//append to set of cliped-depth-image(i)
-			//			I_div_T << I_div_i_t_32f;
-
-
-
-
-
-
-
 
 			//make mask for error value
 			cv::Mat mask_low, mask_high;
@@ -378,20 +366,21 @@ void MainWindow::measure(Frames_t &frames)
 		}
 	}
 
-	grid_depth_averages_T << grid_depth_averages_t;
+	//	grid_depth_averages_T << grid_depth_averages_t;
 	counter++;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
-	if(grid_depth_averages_T.length() >= count_max){
+	//	if(grid_depth_averages_T.length() >= count_max){
+	if(counter >= count_max){
 		mode = Mode::Calc;
 		emit finishedMeasurement();
 	}
-
-	//else
-	//continue the measure mode
-	//and update progressbar
-	emit progressMeasurement(grid_depth_averages_T.count());
+	else{
+		mode = Mode::Measure; //continue
+		//		emit progressMeasurement(grid_depth_averages_T.count());
+		emit progressMeasurement(counter);
+	}
 	return;
 }
 
@@ -400,35 +389,47 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::calc(Frames_t &frames)
 {
+	//calculate mean value t~T of each grid
+	set_mean_T.clear();
+	for(int i = 0; i < I_div_T.count(); i++){ //grid(i)
 
+		float *averages = new float[I_div_T[i].count()];
 
+		for(int _t = 0; _t < I_div_T[i].count(); _t++){ //time(t)
+			//make mask for error value
+			cv::Mat mask_low, mask_high;
+			cv::Mat mask;
+			cv::threshold(I_div_T[i][_t], mask_low, 0.05, 255, cv::THRESH_BINARY);
+			cv::threshold(I_div_T[i][_t], mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
 
-
-	matHistgrams.clear();
-
-	for(int i = 0; i < div_n*div_n; i++){
-
-		float *averages = new float[grid_depth_averages_T.length()];
-
-		for(int t = 0; t < grid_depth_averages_T.length(); t++){
-			float val = (float)grid_depth_averages_T[t][i];
-			averages[t] = val;
+			//Compute mean value in grid(i) at time(t) without error depth value's pixels
+			cv::Scalar _ave = cv::mean(I_div_T[i][_t], mask);
+			double ave = _ave.val[0];
+			averages[_t] = ave;
 		}
 
-		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
+		cv::Mat tmp(1, I_div_T[i].count(), CV_32FC1, averages);
+		//		std::cout << tmp << std::endl;
+		set_mean_T.append(tmp);
+	}
+	//	qDebug() << set_matMeans.count();
 
-		//histgram settings
+
+	//Make histgrams
+	matHistgrams.clear();
+	float range[] = {0.0, h_max};
+	const float *hrange = {range};
+	int histSize = (int)(h_max/h_b); //number of bin
+
+	for(int i = 0; i < set_mean_T.count(); i++){
 		cv::Mat hist;
-		float range[] = {0.0, h_max};
-		const float *hrange = {range};
-		int histSize = (int)(h_max/h_b);
+		cv::calcHist(&set_mean_T[i], 1, 0, cv::Mat(),
+								 hist, 1, &histSize, &hrange, true, false);
 
-		//calculate histgram by OpenCV
-		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
-
-		matHistgrams << hist;
+		matHistgrams.append(hist);
 	}
 
+	//find maximum degree position in histgram matrix
 	maximums.clear();
 	for(int i = 0; i < matHistgrams.count(); i++){
 		double min, max;
@@ -438,6 +439,43 @@ void MainWindow::calc(Frames_t &frames)
 		cv::minMaxLoc(matHistgrams[i], &min, &max, &minLoc, &maxLoc);
 		maximums << maxLoc.y*(h_b); //get value [m]
 	}
+
+
+
+
+
+	//	for(int i = 0; i < div_n*div_n; i++){
+
+	//		float *averages = new float[grid_depth_averages_T.length()];
+
+	//		for(int t = 0; t < grid_depth_averages_T.length(); t++){
+	//			float val = (float)grid_depth_averages_T[t][i];
+	//			averages[t] = val;
+	//		}
+
+	//		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
+
+	//		//histgram settings
+	//		cv::Mat hist;
+	//		float range[] = {0.0, h_max};
+	//		const float *hrange = {range};
+	//		int histSize = (int)(h_max/h_b);
+
+	//		//calculate histgram by OpenCV
+	//		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
+
+	//		matHistgrams << hist;
+	//	}
+
+	//	maximums.clear();
+	//	for(int i = 0; i < matHistgrams.count(); i++){
+	//		double min, max;
+	//		cv::Point minLoc, maxLoc;
+	//		min = max = -1;
+	//		//search value of maximum degree position
+	//		cv::minMaxLoc(matHistgrams[i], &min, &max, &minLoc, &maxLoc);
+	//		maximums << maxLoc.y*(h_b); //get value [m]
+	//	}
 
 
 	//Make histgram images for debug
@@ -525,15 +563,16 @@ void MainWindow::save(Frames_t &frames)
 	header += QString("\n");
 	f.write(header.toStdString().c_str());
 
-	for(int i = 0; i < grid_depth_averages_T.count(); i++){
+	//	for(int i = 0; i < grid_depth_averages_T.count(); i++){
+	for(int i = 0; i < count_max; i++){
 		QString line;
 		line += QString("%1,").arg(i);
 
-		QList<double> depth_t = grid_depth_averages_T[i];
-		Q_FOREACH(double depth, depth_t){
-			line += QString("%1,").arg(depth);
-		}
-		line += QString("\n");
+		//		QList<double> depth_t = grid_depth_averages_T[i];
+		//		Q_FOREACH(double depth, depth_t){
+		//			line += QString("%1,").arg(depth);
+		//		}
+		//		line += QString("\n");
 
 		f.write(line.toStdString().c_str());
 	}
