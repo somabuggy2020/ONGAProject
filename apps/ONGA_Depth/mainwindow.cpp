@@ -415,8 +415,10 @@ void MainWindow::calc(Frames_t &frames)
 	//	qDebug() << set_matMeans.count();
 
 
+
 	//Make histgrams
-	matHistgrams.clear();
+	QList<cv::Mat> _set_histgrams;
+
 	float range[] = {0.0, h_max};
 	const float *hrange = {range};
 	int histSize = (int)(h_max/h_b); //number of bin
@@ -426,57 +428,20 @@ void MainWindow::calc(Frames_t &frames)
 		cv::calcHist(&set_mean_T[i], 1, 0, cv::Mat(),
 								 hist, 1, &histSize, &hrange, true, false);
 
-		matHistgrams.append(hist);
+		_set_histgrams.append(hist);
 	}
+
 
 	//find maximum degree position in histgram matrix
 	maximums.clear();
-	for(int i = 0; i < matHistgrams.count(); i++){
+	for(int i = 0; i < _set_histgrams.count(); i++){
 		double min, max;
 		cv::Point minLoc, maxLoc;
 		min = max = -1;
 		//search value of maximum degree position
-		cv::minMaxLoc(matHistgrams[i], &min, &max, &minLoc, &maxLoc);
+		cv::minMaxLoc(_set_histgrams[i], &min, &max, &minLoc, &maxLoc);
 		maximums << maxLoc.y*(h_b); //get value [m]
 	}
-
-
-
-
-
-	//	for(int i = 0; i < div_n*div_n; i++){
-
-	//		float *averages = new float[grid_depth_averages_T.length()];
-
-	//		for(int t = 0; t < grid_depth_averages_T.length(); t++){
-	//			float val = (float)grid_depth_averages_T[t][i];
-	//			averages[t] = val;
-	//		}
-
-	//		cv::Mat m1 = cv::Mat(1, grid_depth_averages_T.length(), CV_32FC1, averages);
-
-	//		//histgram settings
-	//		cv::Mat hist;
-	//		float range[] = {0.0, h_max};
-	//		const float *hrange = {range};
-	//		int histSize = (int)(h_max/h_b);
-
-	//		//calculate histgram by OpenCV
-	//		cv::calcHist(&m1, 1, 0, cv::Mat(), hist, 1, &histSize, &hrange, true, false);
-
-	//		matHistgrams << hist;
-	//	}
-
-	//	maximums.clear();
-	//	for(int i = 0; i < matHistgrams.count(); i++){
-	//		double min, max;
-	//		cv::Point minLoc, maxLoc;
-	//		min = max = -1;
-	//		//search value of maximum degree position
-	//		cv::minMaxLoc(matHistgrams[i], &min, &max, &minLoc, &maxLoc);
-	//		maximums << maxLoc.y*(h_b); //get value [m]
-	//	}
-
 
 	//Make histgram images for debug
 	imgHistgrams.clear();
@@ -486,11 +451,11 @@ void MainWindow::calc(Frames_t &frames)
 
 	cv::Size sz(hist_w, hist_h); //image size
 
-	for(int i = 0; i < matHistgrams.count(); i++){
+	for(int i = 0; i < _set_histgrams.count(); i++){
 		imgHistgrams.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
 
-		cv::normalize(matHistgrams[i],
-									matHistgrams[i],
+		cv::normalize(_set_histgrams[i],
+									_set_histgrams[i],
 									0,
 									sz.height,
 									cv::NORM_MINMAX,
@@ -500,7 +465,7 @@ void MainWindow::calc(Frames_t &frames)
 		for(int j = 0; j < (int)(h_max/h_b); j++){
 			cv::line(imgHistgrams.back(),
 							 cv::Point(bin_w*j, hist_h-1),
-							 cv::Point(bin_w*j, hist_h - cvRound(matHistgrams[i].at<float>(j))),
+							 cv::Point(bin_w*j, hist_h - cvRound(_set_histgrams[i].at<float>(j))),
 							 cv::Scalar::all(255),
 							 2, 8, 0);
 		}
@@ -523,9 +488,6 @@ void MainWindow::calc(Frames_t &frames)
 								cv::Mat(3, matHorizontal.cols, CV_8UC3, cv::Scalar(0,0,255)),
 								imgTotalHistgram);
 	}
-
-	//	cv::imshow("test", imgTotalHistgram);
-	//	cv::waitKey(1);
 
 	emit finishedCalculate();
 
@@ -558,22 +520,21 @@ void MainWindow::save(Frames_t &frames)
 	QString header;
 	header += QString(",");
 	for(int i = 0; i < div_n*div_n; i++){
-		header += QString("%1,").arg(i);
+		header += QString("%1,").arg(i); //grid index
 	}
 	header += QString("\n");
 	f.write(header.toStdString().c_str());
 
 	//	for(int i = 0; i < grid_depth_averages_T.count(); i++){
-	for(int i = 0; i < count_max; i++){
+	for(int i = 0; i < set_mean_T.count(); i++){
 		QString line;
 		line += QString("%1,").arg(i);
 
-		//		QList<double> depth_t = grid_depth_averages_T[i];
-		//		Q_FOREACH(double depth, depth_t){
-		//			line += QString("%1,").arg(depth);
-		//		}
-		//		line += QString("\n");
+		for(int _t = 0; _t < set_mean_T[i].cols; _t++){
+			line += QString("%1,").arg(set_mean_T[i].at<float>(_t));
+		}
 
+		line += QString("\n");
 		f.write(line.toStdString().c_str());
 	}
 

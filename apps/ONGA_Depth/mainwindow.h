@@ -100,8 +100,6 @@ private:
 
 	//	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
-
-	QList<cv::Mat> matHistgrams;
 	QList<double> maximums;
 	QList<cv::Mat> imgHistgrams;
 	cv::Mat imgTotalHistgram;
