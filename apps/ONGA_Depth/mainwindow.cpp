@@ -128,9 +128,22 @@ void MainWindow::setup_signals_slots()
 	 ***/
 	connect(controlPanel, &ControlPanel::On_start_clicked, this,
 					[=](){
-		mode = Mode::Measure;
+		counter = 0;
 		imgvwrHistgrams->hide();
+		I_div_T.clear();
+
+		//allocate divided depth memory
+		for(int i = 0; i < (div_n*div_n); i++){
+			QList<cv::Mat> tmp;
+			for(int t = 0; t < count_max; t++){
+				cv::Mat mat_tmp = cv::Mat();
+				tmp.append(mat_tmp);
+			}
+			I_div_T.append(tmp);
+		}
+
 		emit startMeasurement();
+		mode = Mode::Measure;
 	});
 
 	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
@@ -291,43 +304,82 @@ void MainWindow::main()
  */
 void MainWindow::measure(Frames_t &frames)
 {
-	cv::Mat _Depth = frames.imgDepth.clone();
+	//clone depth image
+	cv::Mat I_depth_t = frames.imgDepth.clone();
+
 	QList<double> grid_depth_averages_t;
+
+	for(int i = 0; i < (div_n*div_n); i++){
+		//grid position
+		int x = i%div_n;
+		int y = i/div_n;
+
+		//set clipping area as rectangle
+		cv::Rect rect = cv::Rect(cvRound(I_depth_t.cols/div_n*x), //origin x
+														 cvRound(I_depth_t.rows/div_n*y), //origin y
+														 cvRound(I_depth_t.cols/div_n),   //width
+														 cvRound(I_depth_t.rows/div_n));  //height
+
+		//carry-out clipping
+		cv::Mat I_div_i_t_16u(I_depth_t, rect);
+
+		//calculate 16bit depth value to 32bit float meter value
+		cv::Mat I_div_i_t_32f;
+		I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
+
+		//make mask
+		cv::Mat mask_low, mask_high, mask;
+		cv::threshold(I_div_i_t_32f, mask_low, 0.05, 255, cv::THRESH_BINARY);
+		cv::threshold(I_div_i_t_32f, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
+		cv::bitwise_and(mask_low, mask_high, mask);
+		mask.convertTo(mask, CV_8UC1);
+
+		I_div_T[i][counter] = I_div_i_t_32f.clone();
+	}
 
 	for(int j = 0; j < div_n; j++){
 		for(int i = 0; i < div_n; i++){
 			//set clipping area as rectangle
-			cv::Rect rect = cv::Rect(_Depth.cols/div_n*i, //origin x
-															 _Depth.rows/div_n*j, //origin y
-															 _Depth.cols/div_n,   //width
-															 _Depth.rows/div_n);  //height
+			cv::Rect rect = cv::Rect(I_depth_t.cols/div_n*i, //origin x
+															 I_depth_t.rows/div_n*j, //origin y
+															 I_depth_t.cols/div_n,   //width
+															 I_depth_t.rows/div_n);  //height
 
 			//carry-out clipping
-			cv::Mat _out(_Depth, rect);
+			cv::Mat I_div_i_t_16u(I_depth_t, rect);
+
 			//calculate 16bit depth value to 32bit float meter value
-			cv::Mat out;
-			_out.convertTo(out, CV_32FC1, frames.scale);
+			cv::Mat I_div_i_t_32f;
+			I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
+
+			//append to set of cliped-depth-image(i)
+			//			I_div_T << I_div_i_t_32f;
+
+
+
+
+
+
 
 
 			//make mask for error value
 			cv::Mat mask_low, mask_high;
 			cv::Mat mask;
-			cv::threshold(out, mask_low, 0.05, 255, cv::THRESH_BINARY);
-			cv::threshold(out, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
+			cv::threshold(I_div_i_t_32f, mask_low, 0.05, 255, cv::THRESH_BINARY);
+			cv::threshold(I_div_i_t_32f, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
 
 			cv::bitwise_and(mask_low, mask_high, mask);
 			mask.convertTo(mask, CV_8UC1);
 
 			//calculate mean value in clipped depth values
-			cv::Scalar _ave = cv::mean(out, mask);
+			cv::Scalar _ave = cv::mean(I_div_i_t_32f, mask);
 			double ave = _ave.val[0];
 			grid_depth_averages_t << ave; //append to array
 		}
 	}
 
 	grid_depth_averages_T << grid_depth_averages_t;
-
-
+	counter++;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
@@ -348,6 +400,10 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::calc(Frames_t &frames)
 {
+
+
+
+
 	matHistgrams.clear();
 
 	for(int i = 0; i < div_n*div_n; i++){
@@ -430,8 +486,8 @@ void MainWindow::calc(Frames_t &frames)
 								imgTotalHistgram);
 	}
 
-//	cv::imshow("test", imgTotalHistgram);
-//	cv::waitKey(1);
+	//	cv::imshow("test", imgTotalHistgram);
+	//	cv::waitKey(1);
 
 	emit finishedCalculate();
 

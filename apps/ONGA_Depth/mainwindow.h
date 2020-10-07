@@ -81,8 +81,11 @@ private:
 	R200 *r200;
 
 	//Measurement parameter
+	int counter;
 	int count_max;
 	int div_n;
+	QList<QList<cv::Mat>> I_div_T;
+
 	float h_max;
 	float h_b;
 
@@ -91,6 +94,8 @@ private:
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
+
+
 
 	QList<QList<double>> grid_depth_averages_T;
 	cv::Mat imgResAves;
