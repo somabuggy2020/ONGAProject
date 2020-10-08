@@ -49,7 +49,6 @@ MainWindow::MainWindow(QWidget *parent)
 	camparams = camParamControl->camparams;
 	isCamParamChanged = false;
 	frames = new Frames_t();
-	imgResAves = cv::Mat();
 
 
 	//Try to start the process
@@ -142,7 +141,7 @@ void MainWindow::setup_signals_slots()
 			I_div_T.append(tmp);
 		}
 
-		imgTotalHistgram = cv::Mat();
+		imgHistograms = cv::Mat();
 
 		emit startMeasurement();
 		mode = Mode::Measure;
@@ -243,7 +242,7 @@ void MainWindow::setup_signals_slots()
 		}
 
 
-		imgvwrHistgrams->setImage(imgTotalHistgram);
+		imgvwrHistgrams->setImage(imgHistograms);
 		imgvwrHistgrams->show();
 	});
 
@@ -417,7 +416,8 @@ void MainWindow::calc(Frames_t &frames)
 
 
 	//Make histgram images for debug
-	imgHistgrams.clear();
+	QList<cv::Mat> _imgHistograms;
+
 	int hist_w = cvRound(h_max/h_b)*3;
 	int hist_h = cvRound(h_max/h_b)*3;
 	//	int hist_h = count_max;
@@ -426,7 +426,7 @@ void MainWindow::calc(Frames_t &frames)
 	cv::Size sz(hist_w, hist_h); //image size
 
 	for(int i = 0; i < _set_histograms.count(); i++){
-		imgHistgrams.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
+		_imgHistograms.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
 
 		cv::normalize(_set_histograms[i],
 									_set_histograms[i],
@@ -437,7 +437,7 @@ void MainWindow::calc(Frames_t &frames)
 									cv::Mat());
 
 		for(int j = 0; j < (int)(h_max/h_b); j++){
-			cv::line(imgHistgrams.back(),
+			cv::line(_imgHistograms.back(),
 							 cv::Point(bin_w*j, hist_h-1),
 							 cv::Point(bin_w*j, hist_h - cvRound(_set_histograms[i].at<float>(j))),
 							 cv::Scalar::all(255),
@@ -453,16 +453,16 @@ void MainWindow::calc(Frames_t &frames)
 		//concat horizontal direction
 		for(int x = 0; x < div_n; x++){
 			int idx = x + y*div_n;
-			cv::hconcat(matH, imgHistgrams[idx], matH);
+			cv::hconcat(matH, _imgHistograms[idx], matH);
 			cv::hconcat(matH, vline, matH);
 		}
 
-		if(imgTotalHistgram.empty()) imgTotalHistgram = matH.clone();
-		else cv::vconcat(imgTotalHistgram, matH, imgTotalHistgram);
+		if(imgHistograms.empty()) imgHistograms = matH.clone();
+		else cv::vconcat(imgHistograms, matH, imgHistograms);
 
-		cv::vconcat(imgTotalHistgram,
+		cv::vconcat(imgHistograms,
 								cv::Mat(5, matH.cols, CV_8UC3, cv::Scalar(0,0,255)),
-								imgTotalHistgram);
+								imgHistograms);
 	}
 
 	emit finishedCalculate();
