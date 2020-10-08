@@ -309,8 +309,6 @@ void MainWindow::measure(Frames_t &frames)
 	//clone depth image
 	cv::Mat I_depth_t = frames.imgDepth.clone();
 
-	QList<double> grid_depth_averages_t;
-
 	for(int i = 0; i < (div_n*div_n); i++){
 		//grid position
 		int x = i%div_n;
@@ -332,47 +330,11 @@ void MainWindow::measure(Frames_t &frames)
 		I_div_T[i][counter] = I_div_i_t_32f.clone();
 	}
 
-
-
-
-
-	for(int j = 0; j < div_n; j++){
-		for(int i = 0; i < div_n; i++){
-			//set clipping area as rectangle
-			cv::Rect rect = cv::Rect(I_depth_t.cols/div_n*i, //origin x
-															 I_depth_t.rows/div_n*j, //origin y
-															 I_depth_t.cols/div_n,   //width
-															 I_depth_t.rows/div_n);  //height
-
-			//carry-out clipping
-			cv::Mat I_div_i_t_16u(I_depth_t, rect);
-
-			//calculate 16bit depth value to 32bit float meter value
-			cv::Mat I_div_i_t_32f;
-			I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
-
-			//make mask for error value
-			cv::Mat mask_low, mask_high;
-			cv::Mat mask;
-			cv::threshold(I_div_i_t_32f, mask_low, 0.05, 255, cv::THRESH_BINARY);
-			cv::threshold(I_div_i_t_32f, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
-
-			cv::bitwise_and(mask_low, mask_high, mask);
-			mask.convertTo(mask, CV_8UC1);
-
-			//calculate mean value in clipped depth values
-			cv::Scalar _ave = cv::mean(I_div_i_t_32f, mask);
-			double ave = _ave.val[0];
-			grid_depth_averages_t << ave; //append to array
-		}
-	}
-
-	//	grid_depth_averages_T << grid_depth_averages_t;
+	//increment frame counter
 	counter++;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
-	//	if(grid_depth_averages_T.length() >= count_max){
 	if(counter >= count_max){
 		mode = Mode::Calc;
 		emit finishedMeasurement();
