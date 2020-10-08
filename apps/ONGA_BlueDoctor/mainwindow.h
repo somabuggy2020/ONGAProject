@@ -18,7 +18,7 @@
 
 #include "common.h"
 #include "../../src/ui/CameraParamControl/cameraparamcontrol.h"
-#include "../../src/ui/ControlPanel/controlpanel.h"
+//#include "../../src/ui/ControlPanel/controlpanel.h"
 #include "../../src/ui/ImageViewer/imageviewer.h"
 #include "../../src/R200/r200.h"
 
@@ -63,7 +63,7 @@ signals:
 private:
 	Ui::MainWindow *ui;
 	CameraParameterControlPanel *camParamControl;
-	ControlPanel *controlPanel;
+	//	ControlPanel *controlPanel;
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
@@ -79,20 +79,21 @@ private:
 
 	R200 *r200;
 
-	int count_max;
-	int div_n;
-	float h_max;
-	float h_b;
+	//	int count_max;
+	//	int div_n;
+	//	float h_max;
+	//	float h_b;
 
 	int mode;
 	QDateTime t;
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
-	QList<QList<double>> grid_depth_averages_T;
-	cv::Mat imgResAves;
-	QList<cv::Mat> matHistgram;
-	QList<double> maximums;
+
+	//	QList<QList<double>> grid_depth_averages_T;
+	//	cv::Mat imgResAves;
+	//	QList<cv::Mat> matHistgram;
+	//	QList<double> maximums;
 };
 
 Q_DECLARE_METATYPE(cv::Mat)
