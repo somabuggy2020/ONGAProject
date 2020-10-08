@@ -185,16 +185,6 @@ void MainWindow::setup_signals_slots()
 		//			delete child->widget();
 		//			delete child;
 		//		}
-		//		for(int i = 0; i < maximums.count(); i++){
-		//			int x = i%div_n;
-		//			int y = i/div_n;
-		//			QLabel *lbl = new QLabel();
-		//			lbl->setText(QString::number(maximums[i],'f',3));
-		//			lbl->setAlignment(Qt::AlignHCenter);
-		//			lbl->setAlignment(Qt::AlignVCenter);
-		//			lbl->setFrameShape(QFrame::Shape::WinPanel);
-		//			ui->gl->addWidget(lbl, y, x);
-		//		}
 	});
 }
 
