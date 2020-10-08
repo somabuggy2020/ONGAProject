@@ -17,6 +17,9 @@ find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 #librealsense
 include_directories(C:\\librealsense1.12.4\\include)
 link_directories(C:\\librealsense1.12.4\\lib\\x64)
+include_directories(C:\\librealsense\\include)
+link_directories(C:\\librealsense\\lib)
+
 
 #OpenCV
 set(OpenCV_DIR $ENV{OpenCV_ROOT})

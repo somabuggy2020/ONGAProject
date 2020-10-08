@@ -562,31 +562,6 @@ void MainWindow::draw(Frames_t &frames)
 						 cv::Scalar(0,0,255), //Red
 						 2);
 	}
-
-
-	//Make image of Histgram
-	//	if(matHistgrams.empty()) return;
-
-	//	cv::Size sz; //Histgram image size
-	//	sz.width = 512;
-	//	sz.height = 400;
-	//	int bin_w = cvRound((double)sz.width/(h_max/h_b));
-	//	cv::Mat img(sz, CV_8UC3, cv::Scalar::all(0));
-
-	//	cv::normalize(matHistgrams[0], matHistgrams[0], 0, img.rows, cv::NORM_MINMAX, -1, cv::Mat());
-
-	//	for(int i = 1; i < (int)(h_max/h_b); i++){
-	//		line(img,
-	//				 cv::Point(bin_w*(i-1), sz.height - cvRound(matHistgrams[0].at<float>(i-1))),
-	//				cv::Point(bin_w*(i), sz.height - cvRound(matHistgrams[0].at<float>(i))),
-	//				cv::Scalar(255, 0, 0),
-	//				2, 8, 0
-	//				);
-	//	}
-
-	//	cv::imshow("hist", img);
-	//	cv::waitKey(-1);
-
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

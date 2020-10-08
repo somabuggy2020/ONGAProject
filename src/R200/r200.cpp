@@ -142,13 +142,10 @@ int R200::initDevice(QString qsSerial)
 		return -1;
 	}
 
-
-	//rs::deviceインスタンス作成
 	rsdev = nullptr;
 
 	try{
 		if(qsSerial == QString("none")){
-			//シリアル番号で指定されていない場合は0番デバイスをオープン
 			rsdev = rscxt->get_device(0);
 		}
 		else{
@@ -182,16 +179,13 @@ int R200::initDevice(QString qsSerial)
 int R200::initStreams()
 {
 	try{
-		//RGB画像ストリーム起動
 		//		rsdev->enable_stream(rs::stream::color, rs::preset::best_quality);
 		rsdev->enable_stream(rs::stream::color, 1920, 1080, rs::format::bgr8, 30);
 		//				rsDev->enable_stream(rs::stream::color,320,240,rs::format::rgb8,30);
 
-		//depthストリーム起動
 		rsdev->enable_stream(rs::stream::depth, rs::preset::best_quality);
 		//		rsdev->enable_stream(rs::stream::depth, 480, 360, rs::format::z16, 30);
 
-		//画像サイズ保存
 		szRGB = cv::Size(rsdev->get_stream_width(rs::stream::rectified_color),
 										 rsdev->get_stream_height(rs::stream::rectified_color));
 		szDepth = cv::Size(rsdev->get_stream_width(rs::stream::depth),
