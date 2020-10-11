@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 	mode = Mode::Wait;
+	isCanceled = false;
 	t = QDateTime::currentDateTime();
 	camparams = camParamControl->camparams;
 	isCamParamChanged = false;
@@ -206,20 +207,24 @@ void MainWindow::setup_signals_slots()
 
 	connect(this, &MainWindow::startMeasurement, this,
 					[=](){
-		bar = new QProgressBar(this);
-		ui->statusbar->addWidget(bar);
-		bar->setRange(0, count_max);
+		progdialog = new QProgressDialog(this);
+		progdialog->setRange(0, count_max);
+
+		connect(progdialog, &QProgressDialog::canceled, this,
+						[=]{
+			isCanceled = true;
+			progdialog->deleteLater();
+		});
 	});
 
 	connect(this, &MainWindow::progressMeasurement, this,
 					[=](int count){
-		bar->setValue(count);
+		progdialog->setValue(count);
 	});
 
 	connect(this, &MainWindow::finishedMeasurement, this,
 					[=](){
-		ui->statusbar->removeWidget(bar);
-		bar->deleteLater();
+		progdialog->deleteLater();
 	});
 
 	connect(this, &MainWindow::finishedCalculate, this,
@@ -245,11 +250,6 @@ void MainWindow::setup_signals_slots()
 		imgvwrHistgrams->setImage(imgHistograms);
 		imgvwrHistgrams->show();
 	});
-
-
-
-
-
 
 }
 
@@ -327,6 +327,13 @@ void MainWindow::measure(Frames_t &frames)
 		I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
 
 		I_div_T[i][counter] = I_div_i_t_32f.clone();
+	}
+
+	if(isCanceled){
+		mode = Mode::Wait;
+		counter = 0;
+		isCanceled = false;
+		return;
 	}
 
 	//increment frame counter
