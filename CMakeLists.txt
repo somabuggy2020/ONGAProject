@@ -33,8 +33,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 #include_directories(${PCL_INCLUDE_DIRS})
 
 #for resource files
-file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
-file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+QT5_ADD_RESOURCES(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/ONGA_Depth.qrc)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR/resources/config.ini} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
 
 add_executable(ONGA_Depth
 	apps/ONGA_Depth/main.cpp
@@ -54,6 +54,7 @@ add_executable(ONGA_Depth
 	src/ui/ImageViewer/imageviewer.cpp
 	src/ui/ImageViewer/imageviewer.h
 	src/ui/ImageViewer/imageviewer.ui
+	${RESOURCES}
 	)
 
 add_executable(ONGA_BlueDoctor
