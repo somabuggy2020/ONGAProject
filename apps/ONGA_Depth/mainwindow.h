@@ -15,6 +15,7 @@
 #include <QSettings>
 #include <QLabel>
 #include <QProgressBar>
+#include <QProgressDialog>
 
 #include "common.h"
 #include "../../src/ui/CameraParamControl/cameraparamcontrol.h"
@@ -69,7 +70,7 @@ private:
 	ImageViewer *imgvwrAlignedDepth;
 	ImageViewer *imgvwrHistgrams;
 	QLabel *lblStatus;
-	QProgressBar *bar;
+	QProgressDialog *progdialog;
 
 	QThread *th;
 	QTimer *timer;
@@ -92,17 +93,13 @@ private:
 	QList<double> class_values;
 
 	int mode;			//{Mode:Wait, Mode::Measure,,,}
+	bool isCanceled;
 	QDateTime t;	//timestamp
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
 
-
-
-	//	QList<QList<double>> grid_depth_averages_T;
-	cv::Mat imgResAves;
-	QList<cv::Mat> imgHistgrams;
-	cv::Mat imgTotalHistgram;
+	cv::Mat imgHistograms;
 };
 
 Q_DECLARE_METATYPE(cv::Mat)

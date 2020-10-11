@@ -28,15 +28,10 @@ signals:
 	void On_CameraParams_changed(CamParams_t &camparams);
 
 private slots:
-
 	void on_sldrExposure_valueChanged(int value);
-
 	void on_sldrGain_valueChanged(int value);
-
 	void on_sldrWhitebalance_valueChanged(int value);
-
 	void on_sldrIrExposure_valueChanged(int value);
-
 	void on_sldrIrGain_valueChanged(int value);
 
 private:

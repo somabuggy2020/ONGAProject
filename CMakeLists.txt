@@ -14,9 +14,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
+#include common classes for intellisense
+include_directories(.\\src)
+
 #librealsense
 include_directories(C:\\librealsense1.12.4\\include)
 link_directories(C:\\librealsense1.12.4\\lib\\x64)
+include_directories(C:\\librealsense\\include)
+link_directories(C:\\librealsense\\lib)
 
 #OpenCV
 set(OpenCV_DIR $ENV{OpenCV_ROOT})
@@ -28,8 +33,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 #include_directories(${PCL_INCLUDE_DIRS})
 
 #for resource files
-file(GLOB RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ini)
-file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+QT5_ADD_RESOURCES(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/ONGA_Depth.qrc)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR/resources/config.ini} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
 
 add_executable(ONGA_Depth
 	apps/ONGA_Depth/main.cpp
@@ -37,6 +42,9 @@ add_executable(ONGA_Depth
 	apps/ONGA_Depth/mainwindow.h
 	apps/ONGA_Depth/mainwindow.ui
 	apps/ONGA_Depth/common.h
+	apps/ONGA_Depth/controlpanel.cpp
+	apps/ONGA_Depth/controlpanel.h
+	apps/ONGA_Depth/controlpanel.ui
 	src/R200/r200.cpp
 	src/R200/r200.h
 	src/R200/difinition.h
@@ -46,9 +54,7 @@ add_executable(ONGA_Depth
 	src/ui/ImageViewer/imageviewer.cpp
 	src/ui/ImageViewer/imageviewer.h
 	src/ui/ImageViewer/imageviewer.ui
-	src/ui/ControlPanel/controlpanel.cpp
-	src/ui/ControlPanel/controlpanel.h
-	src/ui/ControlPanel/controlpanel.ui
+	${RESOURCES}
 	)
 
 add_executable(ONGA_BlueDoctor
@@ -66,9 +72,9 @@ add_executable(ONGA_BlueDoctor
 	src/ui/ImageViewer/imageviewer.cpp
 	src/ui/ImageViewer/imageviewer.h
 	src/ui/ImageViewer/imageviewer.ui
-	src/ui/ControlPanel/controlpanel.cpp
-	src/ui/ControlPanel/controlpanel.h
-	src/ui/ControlPanel/controlpanel.ui
+	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.cpp
+	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.h
+	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.ui
 	)
 
 target_link_libraries(ONGA_Depth PRIVATE

@@ -30,7 +30,6 @@ private:
 	rs::context *rscxt;
 	rs::device *rsdev;
 
-	//画像サイズ取得用
 	cv::Size szRGB, szDepth, szDepth2RGB, szRGB2Depth;
 };
 

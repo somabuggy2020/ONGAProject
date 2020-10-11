@@ -17,10 +17,10 @@
 #include <QProgressBar>
 
 #include "common.h"
-#include "../../src/ui/CameraParamControl/cameraparamcontrol.h"
-#include "../../src/ui/ControlPanel/controlpanel.h"
-#include "../../src/ui/ImageViewer/imageviewer.h"
-#include "../../src/R200/r200.h"
+#include "ui/HSVRangeControlPanel/hsvrangecontrolpanel.h"
+#include "ui/CameraParamControl/cameraparamcontrol.h"
+#include "ui/ImageViewer/imageviewer.h"
+#include "R200/r200.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -47,6 +47,8 @@ private:
 	void measure(Frames_t &frames);
 	void save(Frames_t &frames);
 	void calc(Frames_t &frames);
+
+	void tracking(Frames_t &frames);
 	void draw(Frames_t &frames);
 	void closeEvent(QCloseEvent *event);
 
@@ -62,8 +64,8 @@ signals:
 
 private:
 	Ui::MainWindow *ui;
+	HSVRangeControlPanel *hsvRangeControl;
 	CameraParameterControlPanel *camParamControl;
-	ControlPanel *controlPanel;
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
@@ -79,20 +81,12 @@ private:
 
 	R200 *r200;
 
-	int count_max;
-	int div_n;
-	float h_max;
-	float h_b;
-
 	int mode;
 	QDateTime t;
 	CamParams_t camparams;
 	bool isCamParamChanged;
 	Frames_t *frames;
-	QList<QList<double>> grid_depth_averages_T;
-	cv::Mat imgResAves;
-	QList<cv::Mat> matHistgram;
-	QList<double> maximums;
+	HSVRange_t hsvRange;
 };
 
 Q_DECLARE_METATYPE(cv::Mat)

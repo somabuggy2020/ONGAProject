@@ -45,11 +45,11 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 	mode = Mode::Wait;
+	isCanceled = false;
 	t = QDateTime::currentDateTime();
 	camparams = camParamControl->camparams;
 	isCamParamChanged = false;
 	frames = new Frames_t();
-	imgResAves = cv::Mat();
 
 
 	//Try to start the process
@@ -142,7 +142,7 @@ void MainWindow::setup_signals_slots()
 			I_div_T.append(tmp);
 		}
 
-		imgTotalHistgram = cv::Mat();
+		imgHistograms = cv::Mat();
 
 		emit startMeasurement();
 		mode = Mode::Measure;
@@ -207,20 +207,24 @@ void MainWindow::setup_signals_slots()
 
 	connect(this, &MainWindow::startMeasurement, this,
 					[=](){
-		bar = new QProgressBar(this);
-		ui->statusbar->addWidget(bar);
-		bar->setRange(0, count_max);
+		progdialog = new QProgressDialog(this);
+		progdialog->setRange(0, count_max);
+
+		connect(progdialog, &QProgressDialog::canceled, this,
+						[=]{
+			isCanceled = true;
+			progdialog->deleteLater();
+		});
 	});
 
 	connect(this, &MainWindow::progressMeasurement, this,
 					[=](int count){
-		bar->setValue(count);
+		progdialog->setValue(count);
 	});
 
 	connect(this, &MainWindow::finishedMeasurement, this,
 					[=](){
-		ui->statusbar->removeWidget(bar);
-		bar->deleteLater();
+		progdialog->deleteLater();
 	});
 
 	connect(this, &MainWindow::finishedCalculate, this,
@@ -243,14 +247,9 @@ void MainWindow::setup_signals_slots()
 		}
 
 
-		imgvwrHistgrams->setImage(imgTotalHistgram);
+		imgvwrHistgrams->setImage(imgHistograms);
 		imgvwrHistgrams->show();
 	});
-
-
-
-
-
 
 }
 
@@ -309,8 +308,6 @@ void MainWindow::measure(Frames_t &frames)
 	//clone depth image
 	cv::Mat I_depth_t = frames.imgDepth.clone();
 
-	QList<double> grid_depth_averages_t;
-
 	for(int i = 0; i < (div_n*div_n); i++){
 		//grid position
 		int x = i%div_n;
@@ -332,47 +329,18 @@ void MainWindow::measure(Frames_t &frames)
 		I_div_T[i][counter] = I_div_i_t_32f.clone();
 	}
 
-
-
-
-
-	for(int j = 0; j < div_n; j++){
-		for(int i = 0; i < div_n; i++){
-			//set clipping area as rectangle
-			cv::Rect rect = cv::Rect(I_depth_t.cols/div_n*i, //origin x
-															 I_depth_t.rows/div_n*j, //origin y
-															 I_depth_t.cols/div_n,   //width
-															 I_depth_t.rows/div_n);  //height
-
-			//carry-out clipping
-			cv::Mat I_div_i_t_16u(I_depth_t, rect);
-
-			//calculate 16bit depth value to 32bit float meter value
-			cv::Mat I_div_i_t_32f;
-			I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
-
-			//make mask for error value
-			cv::Mat mask_low, mask_high;
-			cv::Mat mask;
-			cv::threshold(I_div_i_t_32f, mask_low, 0.05, 255, cv::THRESH_BINARY);
-			cv::threshold(I_div_i_t_32f, mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
-
-			cv::bitwise_and(mask_low, mask_high, mask);
-			mask.convertTo(mask, CV_8UC1);
-
-			//calculate mean value in clipped depth values
-			cv::Scalar _ave = cv::mean(I_div_i_t_32f, mask);
-			double ave = _ave.val[0];
-			grid_depth_averages_t << ave; //append to array
-		}
+	if(isCanceled){
+		mode = Mode::Wait;
+		counter = 0;
+		isCanceled = false;
+		return;
 	}
 
-	//	grid_depth_averages_T << grid_depth_averages_t;
+	//increment frame counter
 	counter++;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
-	//	if(grid_depth_averages_T.length() >= count_max){
 	if(counter >= count_max){
 		mode = Mode::Calc;
 		emit finishedMeasurement();
@@ -455,7 +423,8 @@ void MainWindow::calc(Frames_t &frames)
 
 
 	//Make histgram images for debug
-	imgHistgrams.clear();
+	QList<cv::Mat> _imgHistograms;
+
 	int hist_w = cvRound(h_max/h_b)*3;
 	int hist_h = cvRound(h_max/h_b)*3;
 	//	int hist_h = count_max;
@@ -464,7 +433,7 @@ void MainWindow::calc(Frames_t &frames)
 	cv::Size sz(hist_w, hist_h); //image size
 
 	for(int i = 0; i < _set_histograms.count(); i++){
-		imgHistgrams.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
+		_imgHistograms.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
 
 		cv::normalize(_set_histograms[i],
 									_set_histograms[i],
@@ -475,7 +444,7 @@ void MainWindow::calc(Frames_t &frames)
 									cv::Mat());
 
 		for(int j = 0; j < (int)(h_max/h_b); j++){
-			cv::line(imgHistgrams.back(),
+			cv::line(_imgHistograms.back(),
 							 cv::Point(bin_w*j, hist_h-1),
 							 cv::Point(bin_w*j, hist_h - cvRound(_set_histograms[i].at<float>(j))),
 							 cv::Scalar::all(255),
@@ -491,16 +460,16 @@ void MainWindow::calc(Frames_t &frames)
 		//concat horizontal direction
 		for(int x = 0; x < div_n; x++){
 			int idx = x + y*div_n;
-			cv::hconcat(matH, imgHistgrams[idx], matH);
+			cv::hconcat(matH, _imgHistograms[idx], matH);
 			cv::hconcat(matH, vline, matH);
 		}
 
-		if(imgTotalHistgram.empty()) imgTotalHistgram = matH.clone();
-		else cv::vconcat(imgTotalHistgram, matH, imgTotalHistgram);
+		if(imgHistograms.empty()) imgHistograms = matH.clone();
+		else cv::vconcat(imgHistograms, matH, imgHistograms);
 
-		cv::vconcat(imgTotalHistgram,
+		cv::vconcat(imgHistograms,
 								cv::Mat(5, matH.cols, CV_8UC3, cv::Scalar(0,0,255)),
-								imgTotalHistgram);
+								imgHistograms);
 	}
 
 	emit finishedCalculate();
@@ -600,31 +569,6 @@ void MainWindow::draw(Frames_t &frames)
 						 cv::Scalar(0,0,255), //Red
 						 2);
 	}
-
-
-	//Make image of Histgram
-	//	if(matHistgrams.empty()) return;
-
-	//	cv::Size sz; //Histgram image size
-	//	sz.width = 512;
-	//	sz.height = 400;
-	//	int bin_w = cvRound((double)sz.width/(h_max/h_b));
-	//	cv::Mat img(sz, CV_8UC3, cv::Scalar::all(0));
-
-	//	cv::normalize(matHistgrams[0], matHistgrams[0], 0, img.rows, cv::NORM_MINMAX, -1, cv::Mat());
-
-	//	for(int i = 1; i < (int)(h_max/h_b); i++){
-	//		line(img,
-	//				 cv::Point(bin_w*(i-1), sz.height - cvRound(matHistgrams[0].at<float>(i-1))),
-	//				cv::Point(bin_w*(i), sz.height - cvRound(matHistgrams[0].at<float>(i))),
-	//				cv::Scalar(255, 0, 0),
-	//				2, 8, 0
-	//				);
-	//	}
-
-	//	cv::imshow("hist", img);
-	//	cv::waitKey(-1);
-
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
