@@ -59,10 +59,11 @@ int R200::init()
 int R200::getFrames(Frames_t &frames)
 {
 	if(rsdev == nullptr){
-		//		frames.imgRGB = new cv::Mat(480, 640, CV_8UC3, cv::Scalar::all(255));
-		//		frames.imgDepth = new cv::Mat();
-		//		frames.imgAlignedRGB = new cv::Mat(480, 640, CV_8UC3, cv::Scalar::all(255));
-		//		frames.imgAlignedDepth = new cv::Mat(480, 640, CV_16UC1, cv::Scalar::all(0));
+		frames.imgRGB = cv::Mat(480, 640, CV_8UC3, cv::Scalar::all(0));
+		frames.imgDepth = cv::Mat();
+		frames.imgAlignedRGB = cv::Mat(480, 640, CV_8UC3, cv::Scalar::all(0));
+		frames.imgAlignedDepth = cv::Mat(480, 640, CV_16UC1, cv::Scalar::all(0));
+		return 0;
 	}
 
 	try{
@@ -125,6 +126,7 @@ int R200::initDevice(QString qsSerial)
 	try{
 		if(rscxt->get_device_count() <= 0){
 			qCritical() << "Not found RealSense device";
+			rsdev = nullptr;
 			return -1;
 		}
 		else{
@@ -178,6 +180,10 @@ int R200::initDevice(QString qsSerial)
 
 int R200::initStreams()
 {
+	if(rsdev == nullptr){
+		return 0;
+	}
+
 	try{
 		//		rsdev->enable_stream(rs::stream::color, rs::preset::best_quality);
 		rsdev->enable_stream(rs::stream::color, 1920, 1080, rs::format::bgr8, 30);

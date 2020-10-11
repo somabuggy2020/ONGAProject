@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "src/ui_mainwindow.h"
 
-#define THREAD_T 1
+#define THREAD_T 33
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -55,14 +55,14 @@ void MainWindow::setup()
 	 * setup UI widgets
 	 ***/
 
+	//
+	hsvRangeControl = new HSVRangeControlPanel(this);
+	ui->dwHSVRangeControlPanel->setWidget(hsvRangeControl);
+
 	//CameraParmeter UI
 	camParamControl = new CameraParameterControlPanel(this);
 	camParamControl->setWindowFlag(Qt::Window);
 	camParamControl->hide();
-
-	//Control Panel UI
-	//	controlPanel = new ControlPanel(this);
-	//	ui->dwControlPanel->setWidget(controlPanel);
 
 	//Image UI
 	imgvwrRGB = new ImageViewer("RGB", this);
@@ -92,47 +92,16 @@ void MainWindow::setup_signals_slots()
 	 * signals-slots
 	 ***/
 
+	connect(hsvRangeControl, &HSVRangeControlPanel::On_HSVRange_changed, this,
+					[=](HSVRange_t hsvRange){
+		this->hsvRange = hsvRange;
+	});
+
 	connect(camParamControl, &CameraParameterControlPanel::On_CameraParams_changed, this,
 					[=](CamParams_t &camparams){
 		this->camparams = camparams;
 		isCamParamChanged = true;
 	});
-
-	//	connect(controlPanel, &ControlPanel::On_start_clicked, this,
-	//					[=](){
-	//		mode = Mode::Measure;
-	//		emit startMeasurement();
-	//	});
-
-	//	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
-	//					[=](){
-	//		grid_depth_averages_T.clear();
-	//	});
-
-	//	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
-	//					[=](int arg){
-	//		count_max = arg;
-	//	});
-
-	//	connect(controlPanel, &ControlPanel::On_DivN_changed, this,
-	//					[=](int arg){
-	//		div_n = arg;
-	//	});
-
-	//	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
-	//					[=](double arg){
-	//		h_max = arg;
-	//	});
-
-	//	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
-	//					[=](double arg){
-	//		h_max = arg;
-	//	});
-
-	//	connect(controlPanel, &ControlPanel::On_HistBin_changed, this,
-	//					[=](double arg){
-	//		h_b = arg;
-	//	});
 
 	connect(this, &MainWindow::updateTime, this,
 					[=](){
@@ -160,13 +129,6 @@ void MainWindow::setup_signals_slots()
 		imgvwrAlignedDepth->setImage(frames->imgDepth);
 	}, Qt::BlockingQueuedConnection);
 
-	//	connect(this, &MainWindow::startMeasurement, this,
-	//					[=](){
-	//		bar = new QProgressBar(this);
-	//		ui->statusbar->addWidget(bar);
-	//		bar->setRange(0, count_max);
-	//	});
-
 	connect(this, &MainWindow::progressMeasurement, this,
 					[=](int count){
 		bar->setValue(count);
@@ -180,21 +142,6 @@ void MainWindow::setup_signals_slots()
 
 	connect(this, &MainWindow::finishedCalculate, this,
 					[=](){
-		//		QLayoutItem *child;
-		//		while((child = ui->gl->takeAt(0)) != nullptr){
-		//			delete child->widget();
-		//			delete child;
-		//		}
-		//		for(int i = 0; i < maximums.count(); i++){
-		//			int x = i%div_n;
-		//			int y = i/div_n;
-		//			QLabel *lbl = new QLabel();
-		//			lbl->setText(QString::number(maximums[i],'f',3));
-		//			lbl->setAlignment(Qt::AlignHCenter);
-		//			lbl->setAlignment(Qt::AlignVCenter);
-		//			lbl->setFrameShape(QFrame::Shape::WinPanel);
-		//			ui->gl->addWidget(lbl, y, x);
-		//		}
 	});
 }
 
@@ -216,6 +163,7 @@ void MainWindow::main()
 		//		exit(255);
 	}
 
+	tracking(*frames);
 	draw(*frames);
 
 	switch (mode) {
@@ -269,70 +217,17 @@ void MainWindow::calc(Frames_t &frames)
  */
 void MainWindow::save(Frames_t &frames)
 {
-	//	QDateTime currentTime = QDateTime::currentDateTime();
-
-	//	QString fname = currentTime.toString("yyyy-MM-dd-hh-mm-ss");
-	//	fname += QString(".csv");
-
-	//	//--------------------------------------------------
-	//	//--------------------------------------------------
-	//	//--------------------------------------------------
-	//	QFile f;
-	//	f.setFileName(DepthDataPath + "/" + fname);
-
-	//	if(!f.open(QFile::WriteOnly | QFile::Text)){
-	//		qCritical() << f.errorString();
-	//		mode = Mode::Wait;
-	//		return;
-	//	}
-
-	//	QString header;
-	//	header += QString(",");
-	//	for(int i = 0; i < div_n*div_n; i++){
-	//		header += QString("%1,").arg(i);
-	//	}
-	//	header += QString("\n");
-	//	f.write(header.toStdString().c_str());
-
-	//	for(int i = 0; i < grid_depth_averages_T.count(); i++){
-	//		QString line;
-	//		line += QString("%1,").arg(i);
-
-	//		QList<double> depth_t = grid_depth_averages_T[i];
-	//		Q_FOREACH(double depth, depth_t){
-	//			line += QString("%1,").arg(depth);
-	//		}
-	//		line += QString("\n");
-
-	//		f.write(line.toStdString().c_str());
-	//	}
-
-	//	f.close();
-
-
-	//	//--------------------------------------------------
-	//	//--------------------------------------------------
-	//	//--------------------------------------------------
-	//	f.setFileName(DataPath + "/" + fname);
-	//	if(!f.open(QFile::WriteOnly | QFile::Text)){
-	//		qCritical() << f.errorString();
-	//		mode = Mode::Wait;
-	//		return;
-	//	}
-
-	//	header = QString("");
-	//	header += QString("DivN,%1\n").arg(div_n);
-	//	header += QString("CountMax,%1\n").arg(count_max);
-	//	f.write(header.toStdString().c_str());
-
-	//	for(int i = 0; i < maximums.count(); i++){
-	//		QString line;
-	//		line += QString("%1,%2\n").arg(i).arg(maximums[i]);
-	//		f.write(line.toStdString().c_str());
-	//	}
-	//	f.close();
 
 	mode = Mode::Wait;
+	return;
+}
+
+/*!
+ * \brief MainWindow::tracking
+ * \param frames
+ */
+void MainWindow::tracking(Frames_t &frames)
+{
 	return;
 }
 
@@ -350,7 +245,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	th->exit();
 	r200->close();
 
-	//設定値書き込み
 	QSettings cfg("config.ini", QSettings::IniFormat);
 	cfg.beginGroup("MAIN");
 	cfg.endGroup();
