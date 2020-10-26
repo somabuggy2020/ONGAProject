@@ -157,8 +157,8 @@
    </property>
    <property name="iconSize">
     <size>
-     <width>50</width>
-     <height>50</height>
+     <width>80</width>
+     <height>80</height>
     </size>
    </property>
    <attribute name="toolBarArea">
@@ -168,6 +168,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actOpenCamParamCont"/>
+   <addaction name="actionCameraParamAuto"/>
   </widget>
   <widget class="QDockWidget" name="dwControlPanel">
    <property name="features">
@@ -242,6 +243,15 @@
    </property>
    <property name="text">
     <string>OpenCamParamCont</string>
+   </property>
+  </action>
+  <action name="actionCameraParamAuto">
+   <property name="icon">
+    <iconset resource="../../resources/ONGA_Depth.qrc">
+     <normaloff>:/images/camera_auto.png</normaloff>:/images/camera_auto.png</iconset>
+   </property>
+   <property name="text">
+    <string>CameraParamAuto</string>
    </property>
   </action>
  </widget>

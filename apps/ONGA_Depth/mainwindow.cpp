@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "src/ui_mainwindow.h"
 
-#define THREAD_T 1
+#define THREAD_T 33
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -41,6 +41,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	if(r200->init() == -1){
 		qWarning() << "Check Realsense Device Connection";
+		QMessageBox::critical(this,
+													"R200 connection error",
+													"Check Realsense Device connection");
+		exit(-1);
 	}
 
 
@@ -92,16 +96,15 @@ void MainWindow::setup()
 	imgvwrAlignedDepth->initialize(CV_16UC1, QImage::Format::Format_Grayscale8);
 	ui->dwImgDepth->setWidget(imgvwrAlignedDepth);
 
-	imgvwrHistgrams = new ImageViewer("Histgrams", this);
-	imgvwrHistgrams->initialize(CV_8UC3, QImage::Format_BGR888);
-	imgvwrHistgrams->setWindowFlag(Qt::Window);
-	imgvwrHistgrams->hide();
+	imgvwrHistograms = new ImageViewer("Histograms", this);
+	imgvwrHistograms->setWindowFlag(Qt::Window);
+	imgvwrHistograms->initialize(CV_8UC3, QImage::Format_BGR888);
+	imgvwrHistograms->hide();
 
 	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
 	lblStatus->setText("start ...");
 	ui->statusbar->addWidget(lblStatus);
-
 }
 
 /*!
@@ -128,11 +131,19 @@ void MainWindow::setup_signals_slots()
 	 ***/
 	connect(controlPanel, &ControlPanel::On_start_clicked, this,
 					[=](){
-		counter = 0;
-		imgvwrHistgrams->hide();
 
-		//allocate divided depth memory
+		imgvwrHistograms->hide();
+
+		//release memory
+		Q_FOREACH(QList<cv::Mat> mats, I_div_T){
+			for(int i = 0; i < mats.count(); i++){
+				mats[i].release();
+			}
+			mats.clear();
+		}
 		I_div_T.clear();
+
+		//allocate divided depth images memory
 		for(int i = 0; i < (div_n*div_n); i++){
 			QList<cv::Mat> tmp;
 			for(int t = 0; t < count_max; t++){
@@ -142,25 +153,28 @@ void MainWindow::setup_signals_slots()
 			I_div_T.append(tmp);
 		}
 
+		frame_counter = 0;
+		imgHistograms.release();
 		imgHistograms = cv::Mat();
 
+		qInfo() << "Frame counter:" << frame_counter;
+
 		emit startMeasurement();
-		mode = Mode::Measure;
+		mode = Mode::Measure; //Mode transition
 	});
 
 	connect(controlPanel, &ControlPanel::On_clear_clicked, this,
 					[=](){
-		counter = 0;
 	});
 
 	connect(controlPanel, &ControlPanel::On_CountMax_changed, this,
 					[=](int arg){
-		count_max = arg;
+		count_max = arg; //maximum number of frame count
 	});
 
 	connect(controlPanel, &ControlPanel::On_DivN_changed, this,
 					[=](int arg){
-		div_n = arg;
+		div_n = arg; //change the number of division
 	});
 
 	connect(controlPanel, &ControlPanel::On_HistMax_changed, this,
@@ -183,11 +197,12 @@ void MainWindow::setup_signals_slots()
 					[=](){
 		QDateTime ct = QDateTime::currentDateTime();
 		unsigned long dt = t.msecsTo(ct);
+
 		QString str = ct.toString("hh:mm:ss.zzz");
 		str += QString(" / %1 Hz").arg(QString::number(1/(dt/1000.0),'f',1));
 		str += QString(" Mode:%1").arg(Mode::str[mode]);
 		lblStatus->setText(str);
-		t = ct;
+		t = ct; //current time shift
 	});
 
 	connect(this, &MainWindow::updateFrames, this,
@@ -215,6 +230,7 @@ void MainWindow::setup_signals_slots()
 			isCanceled = true;
 			progdialog->deleteLater();
 		});
+
 	});
 
 	connect(this, &MainWindow::progressMeasurement, this,
@@ -235,6 +251,7 @@ void MainWindow::setup_signals_slots()
 			delete child->widget();
 			delete child;
 		}
+
 		for(int i = 0; i < class_values.count(); i++){
 			int x = i%div_n;
 			int y = i/div_n;
@@ -246,10 +263,11 @@ void MainWindow::setup_signals_slots()
 			ui->gl->addWidget(lbl, y, x);
 		}
 
-
-		imgvwrHistgrams->setImage(imgHistograms);
-		imgvwrHistgrams->show();
-	});
+		//		cv::imshow("test", imgHistograms);
+		//		cv::waitKey(-1);
+		imgvwrHistograms->setImage(imgHistograms);
+		imgvwrHistograms->show();
+	}, Qt::BlockingQueuedConnection);
 
 }
 
@@ -265,12 +283,17 @@ void MainWindow::main()
 		r200->setParams(camparams);
 		isCamParamChanged = false;
 	}
+	if(isCamParamAuto){
+		r200->autosetParams();
+		isCamParamAuto = false;
+	}
 
 	if(r200->getFrames(*frames) == -1){
 		qCritical() << "Check Realsense Device Connection";
 		exit(255);
 	}
 
+	//Drawing
 	draw(*frames);
 
 	switch (mode) {
@@ -310,8 +333,8 @@ void MainWindow::measure(Frames_t &frames)
 
 	for(int i = 0; i < (div_n*div_n); i++){
 		//grid position
-		int x = i%div_n;
-		int y = i/div_n;
+		int x = i%div_n; //x position
+		int y = i/div_n; //y position
 
 		//set clipping area as rectangle
 		cv::Rect rect = cv::Rect(cvRound(I_depth_t.cols/div_n*x), //origin x
@@ -320,35 +343,39 @@ void MainWindow::measure(Frames_t &frames)
 														 cvRound(I_depth_t.rows/div_n));  //height
 
 		//carry-out clipping
-		cv::Mat I_div_i_t_16u(I_depth_t, rect);
+		cv::Mat I_div_i_t_16u(I_depth_t, rect); //1 channel 16bit unsigned int depth
 
 		//calculate 16bit depth value to 32bit float meter value
 		cv::Mat I_div_i_t_32f;
-		I_div_i_t_16u.convertTo(I_div_i_t_32f, CV_32FC1, frames.scale);
+		I_div_i_t_16u.convertTo(I_div_i_t_32f,
+														CV_32FC1,
+														frames.scale);
 
-		I_div_T[i][counter] = I_div_i_t_32f.clone();
+		I_div_T[i][frame_counter] = I_div_i_t_32f.clone();
 	}
 
 	if(isCanceled){
 		mode = Mode::Wait;
-		counter = 0;
+		frame_counter = 0;
 		isCanceled = false;
 		return;
 	}
 
 	//increment frame counter
-	counter++;
+	frame_counter++;
+
+	qInfo() << "scale factor:" << frames.scale << "/"
+					<< "frame counter:" << frame_counter;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
-	if(counter >= count_max){
+	if(frame_counter >= count_max){
 		mode = Mode::Calc;
 		emit finishedMeasurement();
 	}
 	else{
 		mode = Mode::Measure; //continue
-		//		emit progressMeasurement(grid_depth_averages_T.count());
-		emit progressMeasurement(counter);
+		emit progressMeasurement(frame_counter);
 	}
 	return;
 }
@@ -371,18 +398,27 @@ void MainWindow::calc(Frames_t &frames)
 			cv::threshold(I_div_T[i][_t], mask_low, 0.05, 255, cv::THRESH_BINARY);
 			cv::threshold(I_div_T[i][_t], mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
 
+
+			mask_low.convertTo(mask_low, CV_8UC1);
+			mask_high.convertTo(mask_high, CV_8UC1);
+			cv::bitwise_and(mask_low, mask_high, mask);
+
+			//			cv::imshow("mask low", mask_low);
+			//			cv::imshow("mask high", mask_high);
+			//			cv::imshow("mask", mask);
+			//			cv::waitKey(-1);
+
 			//Compute mean value in grid(i) at time(t) without error depth value's pixels
 			cv::Scalar _ave = cv::mean(I_div_T[i][_t], mask);
 			double ave = _ave.val[0];
 			averages[_t] = ave;
+
+			//			qDebug() << QString("[%1] at %2 ave:%3[m]").arg(i).arg(_t).arg(ave);
 		}
 
 		cv::Mat tmp(1, I_div_T[i].count(), CV_32FC1, averages);
-		//		std::cout << tmp << std::endl;
 		set_mean_T.append(tmp);
 	}
-	//	qDebug() << set_matMeans.count();
-
 
 
 	//Make histgrams
@@ -394,10 +430,12 @@ void MainWindow::calc(Frames_t &frames)
 
 	for(int i = 0; i < set_mean_T.count(); i++){
 		cv::Mat hist;
-		cv::calcHist(&set_mean_T[i], 1, 0, cv::Mat(),
-								 hist, 1, &histSize, &hrange, true, false);
-
+		cv::calcHist(&set_mean_T[i],
+								 1, 0, cv::Mat(),
+								 hist, 1, &histSize, &hrange,
+								 true, false);
 		_set_histograms.append(hist);
+		//		qDebug() << hist.cols << hist.rows;
 	}
 
 
@@ -411,69 +449,62 @@ void MainWindow::calc(Frames_t &frames)
 		cv::Point minLoc, maxLoc;
 		min = max = -1;
 
-		//search value of maximum degree position
+		//search value of maximum degree class
 		cv::minMaxLoc(_set_histograms[i], &min, &max, &minLoc, &maxLoc);
 
 		//get value[m]
 		class_values << maxLoc.y*(h_b);
 	}
 
-	//"class_values" will show in GUI
-
 
 
 	//Make histgram images for debug
 	QList<cv::Mat> _imgHistograms;
 
-	int hist_w = cvRound(h_max/h_b)*3;
-	int hist_h = cvRound(h_max/h_b)*3;
-	//	int hist_h = count_max;
-	int bin_w = cvRound((double)hist_w/(h_max/h_b));
+	int hist_w = cvRound(h_max/h_b); //[pixel] one bin to one pixel width
+	int hist_h = 100; //[pixel] constant value
+	cv::Size sz(hist_w, hist_h); //image size of one histgram image
 
-	cv::Size sz(hist_w, hist_h); //image size
+	int bin_w = cvRound((double)hist_w/(h_max/h_b));
 
 	for(int i = 0; i < _set_histograms.count(); i++){
 		_imgHistograms.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
 
-		cv::normalize(_set_histograms[i],
-									_set_histograms[i],
-									0,
-									sz.height,
+		//normalization
+		cv::normalize(_set_histograms[i], //input
+									_set_histograms[i], //output
+									0, //minimum value
+									sz.height, //maximum value
 									cv::NORM_MINMAX,
-									-1,
-									cv::Mat());
+									-1, cv::Mat());
 
 		for(int j = 0; j < (int)(h_max/h_b); j++){
 			cv::line(_imgHistograms.back(),
 							 cv::Point(bin_w*j, hist_h-1),
 							 cv::Point(bin_w*j, hist_h - cvRound(_set_histograms[i].at<float>(j))),
 							 cv::Scalar::all(255),
-							 2, 8, 0);
+							 1, 8, 0);
 		}
 	}
 
+	int line_width = 3;
+	cv::Mat vline(hist_h, line_width, CV_8UC3, cv::Scalar(0,0,255));
+	imgHistograms.release();
+	imgHistograms = cv::Mat(1, (hist_w+vline.cols)*div_n+vline.cols,
+													CV_8UC3, cv::Scalar(0,0,255));
 
-	cv::Mat vline(hist_h, 5, CV_8UC3, cv::Scalar(0,0,255));
 	for(int y = 0; y < div_n; y++){
 		cv::Mat matH = vline.clone();
-
-		//concat horizontal direction
 		for(int x = 0; x < div_n; x++){
 			int idx = x + y*div_n;
-			cv::hconcat(matH, _imgHistograms[idx], matH);
+			cv::hconcat(matH, _imgHistograms[idx], matH); //horizontal concat
 			cv::hconcat(matH, vline, matH);
 		}
-
-		if(imgHistograms.empty()) imgHistograms = matH.clone();
-		else cv::vconcat(imgHistograms, matH, imgHistograms);
-
-		cv::vconcat(imgHistograms,
-								cv::Mat(5, matH.cols, CV_8UC3, cv::Scalar(0,0,255)),
-								imgHistograms);
+		cv::vconcat(imgHistograms, matH, imgHistograms);
+		cv::Mat hline(line_width, matH.cols, CV_8UC3, cv::Scalar(0,0,255));
+		cv::vconcat(imgHistograms, hline, imgHistograms);
 	}
-
 	emit finishedCalculate();
-
 	mode = Mode::Save;
 	return;
 }
@@ -562,12 +593,12 @@ void MainWindow::draw(Frames_t &frames)
 						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
 						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
 						 cv::Scalar(0,0,255), //Red
-						 2);
+						 3);
 		cv::line(frames.imgAlignedRGB,
 						 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
 						 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
 						 cv::Scalar(0,0,255), //Red
-						 2);
+						 3);
 	}
 }
 
@@ -614,4 +645,11 @@ void MainWindow::start()
 void MainWindow::on_actOpenCamParamCont_triggered()
 {
 	camParamControl->show();
+	return;
+}
+
+void MainWindow::on_actionCameraParamAuto_triggered()
+{
+	isCamParamAuto = true;
+	return;
 }
