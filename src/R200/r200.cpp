@@ -12,7 +12,6 @@ R200::R200(QObject *parent) : QObject(parent)
  */
 int R200::init()
 {
-	qInfo() << "";
 	if(rscxt == nullptr) rscxt = new rs::context();
 
 	rs::log_to_file(rs::log_severity::debug, "librealsense.log");
@@ -32,7 +31,6 @@ int R200::init()
 		qInfo() << QString("Color Gain (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
 		rsdev->get_option_range(rs::option::color_white_balance, min, max, step);
 		qInfo() << QString("Color WhiteBalance (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
-
 		rsdev->get_option_range(rs::option::r200_lr_exposure, min, max, step);
 		qInfo() << QString("IR Exposure (Min,Max,Step):(%1,%2,%3)").arg(min).arg(max).arg(step);
 		rsdev->get_option_range(rs::option::r200_lr_gain, min, max, step);
@@ -89,6 +87,9 @@ int R200::getFrames(Frames_t &frames)
 int R200::setParams(CamParams_t &camparams)
 {
 	try {
+		rsdev->set_option(rs::option::color_enable_auto_exposure, false);
+		rsdev->set_option(rs::option::r200_lr_auto_exposure_enabled, false);
+
 		rsdev->set_option(rs::option::color_exposure, camparams.exposure);
 		rsdev->set_option(rs::option::color_gain, camparams.gain);
 		rsdev->set_option(rs::option::color_white_balance, camparams.whitebalance);
@@ -101,6 +102,21 @@ int R200::setParams(CamParams_t &camparams)
 		qWarning() << e.get_failed_function().c_str();
 		qWarning() << e.what();
 	}
+	return 0;
+}
+
+int R200::autosetParams()
+{
+	try {
+		rsdev->set_option(rs::option::color_enable_auto_exposure, true);
+		rsdev->set_option(rs::option::r200_lr_auto_exposure_enabled, true);
+	}
+	catch (const rs::error &e) {
+		qWarning() << e.get_failed_args().c_str();
+		qWarning() << e.get_failed_function().c_str();
+		qWarning() << e.what();
+	}
+
 	return 0;
 }
 
@@ -121,8 +137,6 @@ void R200::close()
  */
 int R200::initDevice(QString qsSerial)
 {
-	qInfo() << "";
-
 	try{
 		if(rscxt->get_device_count() <= 0){
 			qCritical() << "Not found RealSense device";

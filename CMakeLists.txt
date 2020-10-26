@@ -57,32 +57,32 @@ add_executable(ONGA_Depth
 	${RESOURCES}
 	)
 
-add_executable(ONGA_BlueDoctor
-	apps/ONGA_BlueDoctor/main.cpp
-	apps/ONGA_BlueDoctor/mainwindow.cpp
-	apps/ONGA_BlueDoctor/mainwindow.h
-	apps/ONGA_BlueDoctor/mainwindow.ui
-	apps/ONGA_BlueDoctor/common.h
-	src/R200/r200.cpp
-	src/R200/r200.h
-	src/R200/difinition.h
-	src/ui/CameraParamControl/cameraparamcontrol.cpp
-	src/ui/CameraParamControl/cameraparamcontrol.h
-	src/ui/CameraParamControl/cameraparamcontrol.ui
-	src/ui/ImageViewer/imageviewer.cpp
-	src/ui/ImageViewer/imageviewer.h
-	src/ui/ImageViewer/imageviewer.ui
-	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.cpp
-	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.h
-	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.ui
-	)
+#add_executable(ONGA_BlueDoctor
+#	apps/ONGA_BlueDoctor/main.cpp
+#	apps/ONGA_BlueDoctor/mainwindow.cpp
+#	apps/ONGA_BlueDoctor/mainwindow.h
+#	apps/ONGA_BlueDoctor/mainwindow.ui
+#	apps/ONGA_BlueDoctor/common.h
+#	src/R200/r200.cpp
+#	src/R200/r200.h
+#	src/R200/difinition.h
+#	src/ui/CameraParamControl/cameraparamcontrol.cpp
+#	src/ui/CameraParamControl/cameraparamcontrol.h
+#	src/ui/CameraParamControl/cameraparamcontrol.ui
+#	src/ui/ImageViewer/imageviewer.cpp
+#	src/ui/ImageViewer/imageviewer.h
+#	src/ui/ImageViewer/imageviewer.ui
+#	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.cpp
+#	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.h
+#	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.ui
+#	)
 
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
 	${OpenCV_LIBRARIES}
 	realsense)
 
-target_link_libraries(ONGA_BlueDoctor PRIVATE
-	Qt5::Widgets
-	${OpenCV_LIBRARIES}
-	realsense)
+#target_link_libraries(ONGA_BlueDoctor PRIVATE
+#	Qt5::Widgets
+#	${OpenCV_LIBRARIES}
+#	realsense)
