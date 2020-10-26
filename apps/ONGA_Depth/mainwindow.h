@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QDockWidget>
+#include <QMessageBox>
 #include <QList>
 #include <QDir>
 #include <QFile>
@@ -43,6 +44,7 @@ private slots:
 	void main();
 
 	void on_actOpenCamParamCont_triggered();
+	void on_actionCameraParamAuto_triggered();
 
 private:
 	void measure(Frames_t &frames);
@@ -68,7 +70,7 @@ private:
 	ImageViewer *imgvwrRGB;
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
-	ImageViewer *imgvwrHistgrams;
+	ImageViewer *imgvwrHistograms;
 	QLabel *lblStatus;
 	QProgressDialog *progdialog;
 
@@ -82,7 +84,7 @@ private:
 	R200 *r200;
 
 	//Measurement parameter
-	int counter;
+	int frame_counter;
 	int count_max;
 	int div_n;
 	QList<QList<cv::Mat>> I_div_T;
@@ -97,6 +99,7 @@ private:
 	QDateTime t;	//timestamp
 	CamParams_t camparams;
 	bool isCamParamChanged;
+	bool isCamParamAuto;
 	Frames_t *frames;
 
 	cv::Mat imgHistograms;

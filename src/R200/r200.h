@@ -20,6 +20,7 @@ public:
 	int init();
 	int getFrames(Frames_t &frames);
 	int setParams(CamParams_t &camparams);
+	int autosetParams();
 	void close();
 
 private:

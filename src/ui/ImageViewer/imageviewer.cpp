@@ -36,13 +36,17 @@ int ImageViewer::initialize(int ImageType, QImage::Format qImageFormat)
 
 void ImageViewer::setImage(cv::Mat img)
 {
-	if(cvMatFormat == CV_8UC3) *(this->img) = img.clone();
+	if(cvMatFormat == CV_8UC3){
+		*(this->img) = img.clone();
+	}
 	if(cvMatFormat == CV_16UC1){
 		//		cv::Mat tmp;
 		img.convertTo(*(this->img), CV_8UC1, 0.08);
 	}
 	//		if(cvMatFormat == CV_16UC1) img.copyTo(*(this->img));
-	if(cvMatFormat == CV_8UC1) img.copyTo(*(this->img));
+	if(cvMatFormat == CV_8UC1){
+		img.copyTo(*(this->img));
+	}
 	update();	//paintEvent関数の呼び出しシグナル
 	return;
 }
@@ -58,7 +62,7 @@ void ImageViewer::paintEvent(QPaintEvent *event)
 								this->img->rows,
 								this->qImageFormat);
 
-	//リサイズ -> ウィジェットのサイズに合わせる
+	//resize for window size
 	QImage qImgResized = qImg.scaled(this->width(),
 																	 this->height(),
 																	 Qt::KeepAspectRatio);
