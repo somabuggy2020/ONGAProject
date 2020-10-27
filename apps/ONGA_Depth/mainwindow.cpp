@@ -101,6 +101,10 @@ void MainWindow::setup()
 	imgvwrHistograms->initialize(CV_8UC3, QImage::Format_BGR888);
 	imgvwrHistograms->hide();
 
+	histogramvwr = new HistogramViewer(this);
+	histogramvwr->setWindowFlag(Qt::Window);
+	histogramvwr->show();
+
 	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
 	lblStatus->setText("start ...");
@@ -156,8 +160,6 @@ void MainWindow::setup_signals_slots()
 		frame_counter = 0;
 		imgHistograms.release();
 		imgHistograms = cv::Mat();
-
-		qInfo() << "Frame counter:" << frame_counter;
 
 		emit startMeasurement();
 		mode = Mode::Measure; //Mode transition
@@ -243,6 +245,19 @@ void MainWindow::setup_signals_slots()
 		progdialog->deleteLater();
 	});
 
+	connect(this, &MainWindow::startCalculate, this,
+					[=](){
+
+		QMessageBox *msgbx;
+		msgbx = new QMessageBox(this);
+		msgbx->setStandardButtons(QMessageBox::NoButton);
+		msgbx->setText("Please wait a minute ...");
+		connect(this, &MainWindow::finishedCalculate,
+						msgbx, &QMessageBox::deleteLater);
+		msgbx->show();
+
+	}, Qt::QueuedConnection);
+
 	connect(this, &MainWindow::finishedCalculate, this,
 					[=](){
 
@@ -263,10 +278,17 @@ void MainWindow::setup_signals_slots()
 			ui->gl->addWidget(lbl, y, x);
 		}
 
-		//		cv::imshow("test", imgHistograms);
-		//		cv::waitKey(-1);
 		imgvwrHistograms->setImage(imgHistograms);
 		imgvwrHistograms->show();
+
+
+		histogramvwr->clear();
+		Q_FOREACH(QList<float> set, histogram_values){
+			histogramvwr->addHistogramData(set);
+		}
+		histogramvwr->updateHistograms(div_n);
+		histogramvwr->update();
+
 	}, Qt::BlockingQueuedConnection);
 
 }
@@ -364,8 +386,8 @@ void MainWindow::measure(Frames_t &frames)
 	//increment frame counter
 	frame_counter++;
 
-	qInfo() << "scale factor:" << frames.scale << "/"
-					<< "frame counter:" << frame_counter;
+	//	qInfo() << "scale factor:" << frames.scale << "/"
+	//					<< "frame counter:" << frame_counter;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
@@ -385,6 +407,8 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::calc(Frames_t &frames)
 {
+	emit startCalculate(); //emit signal
+
 	//calculate mean value t~T of each grid
 	set_mean_T.clear();
 	for(int i = 0; i < I_div_T.count(); i++){ //grid(i)
@@ -435,7 +459,6 @@ void MainWindow::calc(Frames_t &frames)
 								 hist, 1, &histSize, &hrange,
 								 true, false);
 		_set_histograms.append(hist);
-		//		qDebug() << hist.cols << hist.rows;
 	}
 
 
@@ -471,8 +494,9 @@ void MainWindow::calc(Frames_t &frames)
 		_imgHistograms.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
 
 		//normalization
+		cv::Mat tmp;
 		cv::normalize(_set_histograms[i], //input
-									_set_histograms[i], //output
+									tmp, //output
 									0, //minimum value
 									sz.height, //maximum value
 									cv::NORM_MINMAX,
@@ -481,7 +505,7 @@ void MainWindow::calc(Frames_t &frames)
 		for(int j = 0; j < (int)(h_max/h_b); j++){
 			cv::line(_imgHistograms.back(),
 							 cv::Point(bin_w*j, hist_h-1),
-							 cv::Point(bin_w*j, hist_h - cvRound(_set_histograms[i].at<float>(j))),
+							 cv::Point(bin_w*j, hist_h - cvRound(tmp.at<float>(j))),
 							 cv::Scalar::all(255),
 							 1, 8, 0);
 		}
@@ -504,6 +528,22 @@ void MainWindow::calc(Frames_t &frames)
 		cv::Mat hline(line_width, matH.cols, CV_8UC3, cv::Scalar(0,0,255));
 		cv::vconcat(imgHistograms, hline, imgHistograms);
 	}
+
+
+	//--------------------------------------------------
+	//--------------------------------------------------
+	//--------------------------------------------------
+	histogram_values.clear();
+
+	for(int i = 0; i < _set_histograms.count(); i++){
+		cv::Mat tmp = _set_histograms[i].t(); //1-D matrix
+
+		QList<float> tmp_vec;
+		for(int j = 0; j < tmp.cols; j++) tmp_vec << tmp.at<float>(j);
+
+		histogram_values.append(tmp_vec);
+	}
+
 	emit finishedCalculate();
 	mode = Mode::Save;
 	return;

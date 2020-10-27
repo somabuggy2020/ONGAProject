@@ -12,7 +12,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets Charts REQUIRED)
 
 #include common classes for intellisense
 include_directories(.\\src)
@@ -45,6 +45,9 @@ add_executable(ONGA_Depth
 	apps/ONGA_Depth/controlpanel.cpp
 	apps/ONGA_Depth/controlpanel.h
 	apps/ONGA_Depth/controlpanel.ui
+	apps/ONGA_Depth/histogramviewer.cpp
+	apps/ONGA_Depth/histogramviewer.h
+	apps/ONGA_Depth/histogramviewer.ui
 	src/R200/r200.cpp
 	src/R200/r200.h
 	src/R200/difinition.h
@@ -79,6 +82,7 @@ add_executable(ONGA_Depth
 
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
+	Qt5::Charts
 	${OpenCV_LIBRARIES}
 	realsense)
 

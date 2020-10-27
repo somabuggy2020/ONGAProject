@@ -22,6 +22,7 @@
 #include "../../src/ui/CameraParamControl/cameraparamcontrol.h"
 #include "../../src/ui/ControlPanel/controlpanel.h"
 #include "../../src/ui/ImageViewer/imageviewer.h"
+#include "histogramviewer.h"
 #include "../../src/R200/r200.h"
 
 QT_BEGIN_NAMESPACE
@@ -61,6 +62,7 @@ signals:
 	void progressMeasurement(int count);
 	void finishedMeasurement();
 
+	void startCalculate();
 	void finishedCalculate();
 
 private:
@@ -71,6 +73,7 @@ private:
 	ImageViewer *imgvwrAlignedRGB;
 	ImageViewer *imgvwrAlignedDepth;
 	ImageViewer *imgvwrHistograms;
+	HistogramViewer *histogramvwr;
 	QLabel *lblStatus;
 	QProgressDialog *progdialog;
 
@@ -92,6 +95,7 @@ private:
 
 	float h_max;
 	float h_b;
+	QList<QList<float>> histogram_values;
 	QList<double> class_values;
 
 	int mode;			//{Mode:Wait, Mode::Measure,,,}
