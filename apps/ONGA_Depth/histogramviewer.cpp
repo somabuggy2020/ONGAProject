@@ -50,6 +50,8 @@ void HistogramViewer::addHistogramData(QList<float> data)
 	QChartView *tmp = new QChartView(this);
 	tmp->setChart(chart);
 	tmp->setRenderHint(QPainter::Antialiasing);
+	tmp->chart()->createDefaultAxes();
+	tmp->chart()->axisX()->hide();
 
 	chartViews.append(tmp);
 }
