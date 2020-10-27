@@ -106,7 +106,7 @@ private:
 	bool isCamParamAuto;
 	Frames_t *frames;
 
-	cv::Mat imgHistograms;
+	//	cv::Mat imgHistograms;
 };
 
 Q_DECLARE_METATYPE(cv::Mat)

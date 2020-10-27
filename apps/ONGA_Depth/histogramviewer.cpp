@@ -44,6 +44,8 @@ void HistogramViewer::addHistogramData(QList<float> data)
 
 	QChart *chart = new QChart();
 	chart->addSeries(series);
+	chart->setTheme(QChart::ChartTheme::ChartThemeDark);
+	chart->legend()->setVisible(false);
 
 	QChartView *tmp = new QChartView(this);
 	tmp->setChart(chart);

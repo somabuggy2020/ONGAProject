@@ -158,8 +158,8 @@ void MainWindow::setup_signals_slots()
 		}
 
 		frame_counter = 0;
-		imgHistograms.release();
-		imgHistograms = cv::Mat();
+		//		imgHistograms.release();
+		//		imgHistograms = cv::Mat();
 
 		emit startMeasurement();
 		mode = Mode::Measure; //Mode transition
@@ -278,8 +278,8 @@ void MainWindow::setup_signals_slots()
 			ui->gl->addWidget(lbl, y, x);
 		}
 
-		imgvwrHistograms->setImage(imgHistograms);
-		imgvwrHistograms->show();
+		//		imgvwrHistograms->setImage(imgHistograms);
+		//		imgvwrHistograms->show();
 
 
 		histogramvwr->clear();
@@ -511,23 +511,23 @@ void MainWindow::calc(Frames_t &frames)
 		}
 	}
 
-	int line_width = 3;
-	cv::Mat vline(hist_h, line_width, CV_8UC3, cv::Scalar(0,0,255));
-	imgHistograms.release();
-	imgHistograms = cv::Mat(1, (hist_w+vline.cols)*div_n+vline.cols,
-													CV_8UC3, cv::Scalar(0,0,255));
+	//	int line_width = 3;
+	//	cv::Mat vline(hist_h, line_width, CV_8UC3, cv::Scalar(0,0,255));
+	//	imgHistograms.release();
+	//	imgHistograms = cv::Mat(1, (hist_w+vline.cols)*div_n+vline.cols,
+	//													CV_8UC3, cv::Scalar(0,0,255));
 
-	for(int y = 0; y < div_n; y++){
-		cv::Mat matH = vline.clone();
-		for(int x = 0; x < div_n; x++){
-			int idx = x + y*div_n;
-			cv::hconcat(matH, _imgHistograms[idx], matH); //horizontal concat
-			cv::hconcat(matH, vline, matH);
-		}
-		cv::vconcat(imgHistograms, matH, imgHistograms);
-		cv::Mat hline(line_width, matH.cols, CV_8UC3, cv::Scalar(0,0,255));
-		cv::vconcat(imgHistograms, hline, imgHistograms);
-	}
+	//	for(int y = 0; y < div_n; y++){
+	//		cv::Mat matH = vline.clone();
+	//		for(int x = 0; x < div_n; x++){
+	//			int idx = x + y*div_n;
+	//			cv::hconcat(matH, _imgHistograms[idx], matH); //horizontal concat
+	//			cv::hconcat(matH, vline, matH);
+	//		}
+	//		cv::vconcat(imgHistograms, matH, imgHistograms);
+	//		cv::Mat hline(line_width, matH.cols, CV_8UC3, cv::Scalar(0,0,255));
+	//		cv::vconcat(imgHistograms, hline, imgHistograms);
+	//	}
 
 
 	//--------------------------------------------------
