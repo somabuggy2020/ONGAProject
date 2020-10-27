@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>427</height>
+    <width>100</width>
+    <height>100</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -44,7 +44,7 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <property name="sizeConstraint">
-      <enum>QLayout::SetMaximumSize</enum>
+      <enum>QLayout::SetDefaultConstraint</enum>
      </property>
      <property name="leftMargin">
       <number>3</number>

@@ -31,13 +31,23 @@ HistogramViewer::~HistogramViewer()
 
 void HistogramViewer::clear()
 {
+	QLayoutItem *child;
+	while((child = ui->gridLayout->takeAt(0)) != nullptr){
+		delete child->widget();
+		delete child;
+	}
+
+	for(int i = 0; i < chartViews.count(); i++){
+		delete chartViews[i];
+	}
 	chartViews.clear();
 }
 
 void HistogramViewer::addHistogramData(QList<float> data)
 {
 	QBarSet *set = new QBarSet("Histogram");
-	for(int i = 0; i < data.count(); i++) *set << data[i];
+	Q_FOREACH(float d, data) *set << d;
+	//	for(int i = 0; i < data.count(); i++) *set << data[i];
 
 	QBarSeries *series = new QBarSeries();
 	series->append(set);
@@ -58,12 +68,6 @@ void HistogramViewer::addHistogramData(QList<float> data)
 
 void HistogramViewer::updateHistograms(int div_n)
 {
-	QLayoutItem *child;
-	while((child = ui->gridLayout->takeAt(0)) != nullptr){
-		delete child->widget();
-		delete child;
-	}
-
 	for(int i = 0; i < chartViews.count(); i++){
 		int x = (int)(i%div_n);
 		int y = (int)(i/div_n);
