@@ -88,6 +88,7 @@ int R200::setParams(CamParams_t &camparams)
 {
 	try {
 		rsdev->set_option(rs::option::color_enable_auto_exposure, false);
+		rsdev->set_option(rs::option::color_enable_auto_white_balance, false);
 		rsdev->set_option(rs::option::r200_lr_auto_exposure_enabled, false);
 
 		rsdev->set_option(rs::option::color_exposure, camparams.exposure);
@@ -109,6 +110,7 @@ int R200::autosetParams()
 {
 	try {
 		rsdev->set_option(rs::option::color_enable_auto_exposure, true);
+		rsdev->set_option(rs::option::color_enable_auto_white_balance, true);
 		rsdev->set_option(rs::option::r200_lr_auto_exposure_enabled, true);
 	}
 	catch (const rs::error &e) {
@@ -199,7 +201,7 @@ int R200::initStreams()
 	}
 
 	try{
-		//		rsdev->enable_stream(rs::stream::color, rs::preset::best_quality);
+		//				rsdev->enable_stream(rs::stream::color, rs::preset::best_quality);
 		rsdev->enable_stream(rs::stream::color, 1920, 1080, rs::format::bgr8, 30);
 		//				rsDev->enable_stream(rs::stream::color,320,240,rs::format::rgb8,30);
 

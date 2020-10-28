@@ -101,6 +101,11 @@ void MainWindow::setup()
 	imgvwrHistograms->initialize(CV_8UC3, QImage::Format_BGR888);
 	imgvwrHistograms->hide();
 
+	histogramvwr = new HistogramViewer(this);
+	histogramvwr->setWindowFlag(Qt::Window);
+	histogramvwr->setWindowState(Qt::WindowMaximized);
+	histogramvwr->hide();
+
 	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
 	lblStatus->setText("start ...");
@@ -154,10 +159,8 @@ void MainWindow::setup_signals_slots()
 		}
 
 		frame_counter = 0;
-		imgHistograms.release();
-		imgHistograms = cv::Mat();
-
-		qInfo() << "Frame counter:" << frame_counter;
+		//		imgHistograms.release();
+		//		imgHistograms = cv::Mat();
 
 		emit startMeasurement();
 		mode = Mode::Measure; //Mode transition
@@ -208,17 +211,17 @@ void MainWindow::setup_signals_slots()
 	connect(this, &MainWindow::updateFrames, this,
 					[=](Frames_t *frames){
 		imgvwrRGB->setImage(frames->imgRGB);
-	},Qt::BlockingQueuedConnection);
+	});
 
 	connect(this, &MainWindow::updateFrames, this,
 					[=](Frames_t *frames){
 		imgvwrAlignedRGB->setImage(frames->imgAlignedRGB);
-	},Qt::BlockingQueuedConnection);
+	});
 
 	connect(this, &MainWindow::updateFrames, this,
 					[=](Frames_t *frames){
 		imgvwrAlignedDepth->setImage(frames->imgDepth);
-	}, Qt::BlockingQueuedConnection);
+	});
 
 	connect(this, &MainWindow::startMeasurement, this,
 					[=](){
@@ -228,7 +231,7 @@ void MainWindow::setup_signals_slots()
 		connect(progdialog, &QProgressDialog::canceled, this,
 						[=]{
 			isCanceled = true;
-			progdialog->deleteLater();
+			delete progdialog;
 		});
 
 	});
@@ -242,6 +245,19 @@ void MainWindow::setup_signals_slots()
 					[=](){
 		progdialog->deleteLater();
 	});
+
+	connect(this, &MainWindow::startCalculate, this,
+					[=](){
+
+		QMessageBox *msgbx;
+		msgbx = new QMessageBox(this);
+		msgbx->setStandardButtons(QMessageBox::NoButton);
+		msgbx->setText("Please wait a minute ...");
+		connect(this, &MainWindow::finishedCalculate,
+						msgbx, &QMessageBox::deleteLater);
+		msgbx->show();
+
+	}, Qt::QueuedConnection);
 
 	connect(this, &MainWindow::finishedCalculate, this,
 					[=](){
@@ -263,12 +279,17 @@ void MainWindow::setup_signals_slots()
 			ui->gl->addWidget(lbl, y, x);
 		}
 
-		//		cv::imshow("test", imgHistograms);
-		//		cv::waitKey(-1);
-		imgvwrHistograms->setImage(imgHistograms);
-		imgvwrHistograms->show();
-	}, Qt::BlockingQueuedConnection);
+		//		imgvwrHistograms->setImage(imgHistograms);
+		//		imgvwrHistograms->show();
 
+		histogramvwr->clear();
+		Q_FOREACH(QList<float> set, histogram_values){
+			histogramvwr->addHistogramData(set);
+		}
+		histogramvwr->updateHistograms(div_n);
+		histogramvwr->update();
+		histogramvwr->show();
+	});
 }
 
 /*!
@@ -364,8 +385,8 @@ void MainWindow::measure(Frames_t &frames)
 	//increment frame counter
 	frame_counter++;
 
-	qInfo() << "scale factor:" << frames.scale << "/"
-					<< "frame counter:" << frame_counter;
+	//	qInfo() << "scale factor:" << frames.scale << "/"
+	//					<< "frame counter:" << frame_counter;
 
 	//if the number of current total measured frame reached "count_max"
 	//mode will be Mode::Calc
@@ -385,37 +406,31 @@ void MainWindow::measure(Frames_t &frames)
  */
 void MainWindow::calc(Frames_t &frames)
 {
+	emit startCalculate();
+
 	//calculate mean value t~T of each grid
 	set_mean_T.clear();
+
+	//make mask for error value
+	cv::Mat mask_low, mask_high, mask;
+
 	for(int i = 0; i < I_div_T.count(); i++){ //grid(i)
-
 		float *averages = new float[I_div_T[i].count()];
-
 		for(int _t = 0; _t < I_div_T[i].count(); _t++){ //time(t)
-			//make mask for error value
-			cv::Mat mask_low, mask_high;
-			cv::Mat mask;
+			//Threshold
 			cv::threshold(I_div_T[i][_t], mask_low, 0.05, 255, cv::THRESH_BINARY);
 			cv::threshold(I_div_T[i][_t], mask_high, 10.0, 255, cv::THRESH_BINARY_INV);
 
-
+			//Make mask image (binary)
 			mask_low.convertTo(mask_low, CV_8UC1);
 			mask_high.convertTo(mask_high, CV_8UC1);
 			cv::bitwise_and(mask_low, mask_high, mask);
-
-			//			cv::imshow("mask low", mask_low);
-			//			cv::imshow("mask high", mask_high);
-			//			cv::imshow("mask", mask);
-			//			cv::waitKey(-1);
 
 			//Compute mean value in grid(i) at time(t) without error depth value's pixels
 			cv::Scalar _ave = cv::mean(I_div_T[i][_t], mask);
 			double ave = _ave.val[0];
 			averages[_t] = ave;
-
-			//			qDebug() << QString("[%1] at %2 ave:%3[m]").arg(i).arg(_t).arg(ave);
 		}
-
 		cv::Mat tmp(1, I_div_T[i].count(), CV_32FC1, averages);
 		set_mean_T.append(tmp);
 	}
@@ -435,7 +450,6 @@ void MainWindow::calc(Frames_t &frames)
 								 hist, 1, &histSize, &hrange,
 								 true, false);
 		_set_histograms.append(hist);
-		//		qDebug() << hist.cols << hist.rows;
 	}
 
 
@@ -457,53 +471,67 @@ void MainWindow::calc(Frames_t &frames)
 	}
 
 
-
 	//Make histgram images for debug
-	QList<cv::Mat> _imgHistograms;
+	//	QList<cv::Mat> _imgHistograms;
 
-	int hist_w = cvRound(h_max/h_b); //[pixel] one bin to one pixel width
-	int hist_h = 100; //[pixel] constant value
-	cv::Size sz(hist_w, hist_h); //image size of one histgram image
+	//	int hist_w = cvRound(h_max/h_b); //[pixel] one bin to one pixel width
+	//	int hist_h = 100; //[pixel] constant value
+	//	cv::Size sz(hist_w, hist_h); //image size of one histgram image
 
-	int bin_w = cvRound((double)hist_w/(h_max/h_b));
+	//	int bin_w = cvRound((double)hist_w/(h_max/h_b));
+
+	//	for(int i = 0; i < _set_histograms.count(); i++){
+	//		_imgHistograms.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
+
+	//		//normalization
+	//		cv::Mat tmp;
+	//		cv::normalize(_set_histograms[i], //input
+	//									tmp, //output
+	//									0, //minimum value
+	//									sz.height, //maximum value
+	//									cv::NORM_MINMAX,
+	//									-1, cv::Mat());
+
+	//		for(int j = 0; j < (int)(h_max/h_b); j++){
+	//			cv::line(_imgHistograms.back(),
+	//							 cv::Point(bin_w*j, hist_h-1),
+	//							 cv::Point(bin_w*j, hist_h - cvRound(tmp.at<float>(j))),
+	//							 cv::Scalar::all(255),
+	//							 1, 8, 0);
+	//		}
+	//	}
+
+	//	int line_width = 3;
+	//	cv::Mat vline(hist_h, line_width, CV_8UC3, cv::Scalar(0,0,255));
+	//	imgHistograms.release();
+	//	imgHistograms = cv::Mat(1, (hist_w+vline.cols)*div_n+vline.cols,
+	//													CV_8UC3, cv::Scalar(0,0,255));
+
+	//	for(int y = 0; y < div_n; y++){
+	//		cv::Mat matH = vline.clone();
+	//		for(int x = 0; x < div_n; x++){
+	//			int idx = x + y*div_n;
+	//			cv::hconcat(matH, _imgHistograms[idx], matH); //horizontal concat
+	//			cv::hconcat(matH, vline, matH);
+	//		}
+	//		cv::vconcat(imgHistograms, matH, imgHistograms);
+	//		cv::Mat hline(line_width, matH.cols, CV_8UC3, cv::Scalar(0,0,255));
+	//		cv::vconcat(imgHistograms, hline, imgHistograms);
+	//	}
+
+
+	//--------------------------------------------------
+	//--------------------------------------------------
+	//--------------------------------------------------
+	histogram_values.clear();
 
 	for(int i = 0; i < _set_histograms.count(); i++){
-		_imgHistograms.append(cv::Mat(sz, CV_8UC3, cv::Scalar::all(0)));
-
-		//normalization
-		cv::normalize(_set_histograms[i], //input
-									_set_histograms[i], //output
-									0, //minimum value
-									sz.height, //maximum value
-									cv::NORM_MINMAX,
-									-1, cv::Mat());
-
-		for(int j = 0; j < (int)(h_max/h_b); j++){
-			cv::line(_imgHistograms.back(),
-							 cv::Point(bin_w*j, hist_h-1),
-							 cv::Point(bin_w*j, hist_h - cvRound(_set_histograms[i].at<float>(j))),
-							 cv::Scalar::all(255),
-							 1, 8, 0);
-		}
+		cv::Mat tmp = _set_histograms[i].t(); //1-D matrix
+		QList<float> tmp_vec;
+		for(int j = 0; j < tmp.cols; j++) tmp_vec << tmp.at<float>(j);
+		histogram_values.append(tmp_vec);
 	}
 
-	int line_width = 3;
-	cv::Mat vline(hist_h, line_width, CV_8UC3, cv::Scalar(0,0,255));
-	imgHistograms.release();
-	imgHistograms = cv::Mat(1, (hist_w+vline.cols)*div_n+vline.cols,
-													CV_8UC3, cv::Scalar(0,0,255));
-
-	for(int y = 0; y < div_n; y++){
-		cv::Mat matH = vline.clone();
-		for(int x = 0; x < div_n; x++){
-			int idx = x + y*div_n;
-			cv::hconcat(matH, _imgHistograms[idx], matH); //horizontal concat
-			cv::hconcat(matH, vline, matH);
-		}
-		cv::vconcat(imgHistograms, matH, imgHistograms);
-		cv::Mat hline(line_width, matH.cols, CV_8UC3, cv::Scalar(0,0,255));
-		cv::vconcat(imgHistograms, hline, imgHistograms);
-	}
 	emit finishedCalculate();
 	mode = Mode::Save;
 	return;
@@ -593,12 +621,12 @@ void MainWindow::draw(Frames_t &frames)
 						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, 0),
 						 cv::Point(frames.imgAlignedRGB.cols/div_n*i, frames.imgAlignedRGB.rows),
 						 cv::Scalar(0,0,255), //Red
-						 3);
+						 2);
 		cv::line(frames.imgAlignedRGB,
 						 cv::Point(0, frames.imgAlignedRGB.rows/div_n*i),
 						 cv::Point(frames.imgAlignedRGB.cols, frames.imgAlignedRGB.rows/div_n*i),
 						 cv::Scalar(0,0,255), //Red
-						 3);
+						 2);
 	}
 }
 

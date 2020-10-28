@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2020-10-26T22:45:47. -->
+<!-- Written by QtCreator 4.12.4, 2020-10-27T22:33:11. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -255,7 +255,7 @@
     <value type="bool" key="RunConfiguration.UseMultiProcess">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory">C:/Users/ehaya/Documents/Qt/ONGAProject/build</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Users/ehaya/Documents/Qt/ONGAProject/build/Debug</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.1">
