@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 	QDir dir;
 	dir.mkdir("Log");
 	dir.mkdir("Log/DepthData");
+
 	DataPath = QString("./Log");
 	DepthDataPath = QString("./Log/DepthData/");
 
@@ -101,10 +102,7 @@ void MainWindow::setup()
 	imgvwrHistograms->initialize(CV_8UC3, QImage::Format_BGR888);
 	imgvwrHistograms->hide();
 
-	histogramvwr = new HistogramViewer(this);
-	histogramvwr->setWindowFlag(Qt::Window);
-	histogramvwr->setWindowState(Qt::WindowMaximized);
-	histogramvwr->hide();
+
 
 	//Time show label UI (add to statusbar)
 	lblStatus = new QLabel(this);
@@ -279,16 +277,19 @@ void MainWindow::setup_signals_slots()
 			ui->gl->addWidget(lbl, y, x);
 		}
 
-		//		imgvwrHistograms->setImage(imgHistograms);
-		//		imgvwrHistograms->show();
-
+		histogramvwr = new HistogramViewer(this);
+		histogramvwr->setWindowFlag(Qt::Window);
+		histogramvwr->setWindowState(Qt::WindowMaximized);
 		histogramvwr->clear();
+
 		Q_FOREACH(QList<float> set, histogram_values){
 			histogramvwr->addHistogramData(set);
 		}
+
 		histogramvwr->updateHistograms(div_n);
 		histogramvwr->update();
 		histogramvwr->show();
+
 	});
 }
 
@@ -552,6 +553,7 @@ void MainWindow::save(Frames_t &frames)
 	//--------------------------------------------------
 	QFile f;
 	f.setFileName(DepthDataPath + "/" + fname);
+	qInfo() << f.fileName();
 
 	if(!f.open(QFile::WriteOnly | QFile::Text)){
 		qCritical() << f.errorString();

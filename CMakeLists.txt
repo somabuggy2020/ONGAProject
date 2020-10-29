@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 
 project(ONGAProject LANGUAGES CXX)
 
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+#set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -90,3 +91,7 @@ target_link_libraries(ONGA_Depth PRIVATE
 #	Qt5::Widgets
 #	${OpenCV_LIBRARIES}
 #	realsense)
+
+# for install
+install(TARGETS ONGA_Depth RUNTIME
+	DESTINATION ${PROJECT_BINARY_DIR}/../bin)
