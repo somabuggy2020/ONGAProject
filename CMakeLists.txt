@@ -38,10 +38,10 @@ QT5_ADD_RESOURCES(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/ONGA_Depth.qrc
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR/resources/config.ini} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
 
 add_executable(ONGA_Depth
-	apps/ONGA_Depth/main.cpp
-	apps/ONGA_Depth/mainwindow.cpp
-	apps/ONGA_Depth/mainwindow.h
-	apps/ONGA_Depth/mainwindow.ui
+	apps/ONGA_Depth/ONGA_Depth.cpp
+	apps/ONGA_Depth/ONGA_Depth_mainwindow.cpp
+	apps/ONGA_Depth/ONGA_Depth_mainwindow.h
+	apps/ONGA_Depth/ONGA_Depth_mainwindow.ui
 	apps/ONGA_Depth/common.h
 	apps/ONGA_Depth/controlpanel.cpp
 	apps/ONGA_Depth/controlpanel.h
@@ -61,25 +61,25 @@ add_executable(ONGA_Depth
 	${RESOURCES}
 	)
 
-#add_executable(ONGA_BlueDoctor
-#	apps/ONGA_BlueDoctor/main.cpp
-#	apps/ONGA_BlueDoctor/mainwindow.cpp
-#	apps/ONGA_BlueDoctor/mainwindow.h
-#	apps/ONGA_BlueDoctor/mainwindow.ui
-#	apps/ONGA_BlueDoctor/common.h
-#	src/R200/r200.cpp
-#	src/R200/r200.h
-#	src/R200/difinition.h
-#	src/ui/CameraParamControl/cameraparamcontrol.cpp
-#	src/ui/CameraParamControl/cameraparamcontrol.h
-#	src/ui/CameraParamControl/cameraparamcontrol.ui
-#	src/ui/ImageViewer/imageviewer.cpp
-#	src/ui/ImageViewer/imageviewer.h
-#	src/ui/ImageViewer/imageviewer.ui
-#	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.cpp
-#	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.h
-#	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.ui
-#	)
+add_executable(ONGA_BlueDoctor
+	apps/ONGA_BlueDoctor/ONGA_BlueDoctor.cpp
+	apps/ONGA_BlueDoctor/ONGA_BlueDoctor_mainwindow.cpp
+	apps/ONGA_BlueDoctor/ONGA_BlueDoctor_mainwindow.h
+	apps/ONGA_BlueDoctor/ONGA_BlueDoctor_mainwindow.ui
+	apps/ONGA_BlueDoctor/common.h
+	src/R200/r200.cpp
+	src/R200/r200.h
+	src/R200/difinition.h
+	src/ui/CameraParamControl/cameraparamcontrol.cpp
+	src/ui/CameraParamControl/cameraparamcontrol.h
+	src/ui/CameraParamControl/cameraparamcontrol.ui
+	src/ui/ImageViewer/imageviewer.cpp
+	src/ui/ImageViewer/imageviewer.h
+	src/ui/ImageViewer/imageviewer.ui
+	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.cpp
+	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.h
+	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.ui
+	)
 
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
@@ -87,10 +87,10 @@ target_link_libraries(ONGA_Depth PRIVATE
 	${OpenCV_LIBRARIES}
 	realsense)
 
-#target_link_libraries(ONGA_BlueDoctor PRIVATE
-#	Qt5::Widgets
-#	${OpenCV_LIBRARIES}
-#	realsense)
+target_link_libraries(ONGA_BlueDoctor PRIVATE
+	Qt5::Widgets
+	${OpenCV_LIBRARIES}
+	realsense)
 
 # for install
 install(TARGETS ONGA_Depth RUNTIME

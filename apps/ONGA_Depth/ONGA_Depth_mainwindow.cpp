@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "src/ui_mainwindow.h"
+#include "ONGA_Depth_mainwindow.h"
+#include "ui_ONGA_Depth_mainwindow.h"
 
 #define THREAD_T 33
 

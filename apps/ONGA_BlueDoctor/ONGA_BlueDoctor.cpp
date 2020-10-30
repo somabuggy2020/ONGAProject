@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "ONGA_BlueDoctor_mainwindow.h"
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QtGlobal>
