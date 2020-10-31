@@ -24,6 +24,10 @@ link_directories(C:\\librealsense1.12.4\\lib\\x64)
 include_directories(C:\\librealsense\\include)
 link_directories(C:\\librealsense\\lib)
 
+#librealsense2
+include_directories(C:\\librealsense2\\include)
+link_directories(C:\\librealsense2\\lib)
+
 #OpenCV
 set(OpenCV_DIR $ENV{OpenCV_ROOT})
 find_package(OpenCV REQUIRED)
@@ -36,6 +40,14 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 #for resource files
 QT5_ADD_RESOURCES(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources/ONGA_Depth.qrc)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR/resources/config.ini} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+
+
+add_executable(Sample_D455
+	apps/Samples/Sample_D455.cpp
+	src/D400s/d400s.cpp
+	src/D400s/d400s.h
+	)
+
 
 add_executable(ONGA_Depth
 	apps/ONGA_Depth/ONGA_Depth.cpp
@@ -79,6 +91,12 @@ add_executable(ONGA_BlueDoctor
 	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.cpp
 	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.h
 	src/ui/HSVRangeControlPanel/hsvrangecontrolpanel.ui
+	)
+
+target_link_libraries(Sample_D455 PRIVATE
+	Qt5::Core
+	${OpenCV_LIBRARIES}
+	realsense2
 	)
 
 target_link_libraries(ONGA_Depth PRIVATE
