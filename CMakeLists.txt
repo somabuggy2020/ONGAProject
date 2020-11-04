@@ -63,6 +63,8 @@ add_executable(ONGA_Depth
 	apps/ONGA_Depth/histogramviewer.ui
 	src/R200/r200.cpp
 	src/R200/r200.h
+	src/D400s/d400s.cpp
+	src/D400s/d400s.h
 	src/R200/difinition.h
 	src/ui/CameraParamControl/cameraparamcontrol.cpp
 	src/ui/CameraParamControl/cameraparamcontrol.h
@@ -96,14 +98,14 @@ add_executable(ONGA_BlueDoctor
 target_link_libraries(Sample_D455 PRIVATE
 	Qt5::Core
 	${OpenCV_LIBRARIES}
-	realsense2
-	)
+	realsense2)
 
 target_link_libraries(ONGA_Depth PRIVATE
 	Qt5::Widgets
 	Qt5::Charts
 	${OpenCV_LIBRARIES}
-	realsense)
+	realsense
+	realsense2)
 
 target_link_libraries(ONGA_BlueDoctor PRIVATE
 	Qt5::Widgets
