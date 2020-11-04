@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "src/ui_mainwindow.h"
+#include "ONGA_Depth_mainwindow.h"
+#include "ui_ONGA_Depth_mainwindow.h"
 
 #define THREAD_T 33
 
@@ -39,11 +39,20 @@ MainWindow::MainWindow(QWidget *parent)
 	// Try to open R200
 	//
 	r200 = new R200();
+	d455 = new D400s();
 
-	if(r200->init() == -1){
+	//	if(r200->init() == -1){
+	//		qWarning() << "Check Realsense Device Connection";
+	//		QMessageBox::critical(this,
+	//													"R200 connection error",
+	//													"Check Realsense Device connection");
+	//		exit(-1);
+	//	}
+
+	if(d455->init() == -1){
 		qWarning() << "Check Realsense Device Connection";
 		QMessageBox::critical(this,
-													"R200 connection error",
+													"D455 connection error",
 													"Check Realsense Device connection");
 		exit(-1);
 	}
@@ -302,15 +311,19 @@ void MainWindow::main()
 	emit updateTime();
 
 	if(isCamParamChanged){
-		r200->setParams(camparams);
+		//		r200->setParams(camparams);
 		isCamParamChanged = false;
 	}
 	if(isCamParamAuto){
-		r200->autosetParams();
+		//		r200->autosetParams();
 		isCamParamAuto = false;
 	}
 
-	if(r200->getFrames(*frames) == -1){
+	//	if(r200->getFrames(*frames) == -1){
+	//		qCritical() << "Check Realsense Device Connection";
+	//		exit(255);
+	//	}
+	if(d455->getFrames(*frames) == -1){
 		qCritical() << "Check Realsense Device Connection";
 		exit(255);
 	}

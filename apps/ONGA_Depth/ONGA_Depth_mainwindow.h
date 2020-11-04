@@ -24,6 +24,7 @@
 #include "../../src/ui/ImageViewer/imageviewer.h"
 #include "histogramviewer.h"
 #include "../../src/R200/r200.h"
+#include "../../src/D400s/d400s.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -85,6 +86,7 @@ private:
 	QString DataPath;
 
 	R200 *r200;
+	D400s *d455;
 
 	//Measurement parameter
 	int frame_counter;
